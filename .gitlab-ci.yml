@@ -52,7 +52,7 @@ validate:
   artifacts:
     paths:
       - aws.cfg
-  # when: manual
+  when: manual
         # on_success
   tags:
     - build_job_docker
@@ -130,7 +130,7 @@ deploy:
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-    - gitlab_config=$(cat ~/.docker/config.json | jq -c '.auths["'$CI_REGISTRY'"]')
+    - gitlab_config=$(cat $CI_REGISTRY_DIR/.docker/config.json | jq -c '.auths["'$CI_REGISTRY'"]')
     - echo "$gitlab_config" | base64 -w0 > gitlab_config_b64.txt
     - kubectl create secret docker-registry gitlab-cred --docker-server=$CI_REGISTRY --docker-username=$CI_REGISTRY_USER --docker-password=$(cat gitlab_config_b64.txt)
     - kubectl apply -f deployment.yaml
