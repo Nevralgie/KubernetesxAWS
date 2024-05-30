@@ -133,6 +133,9 @@ deploy:
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
     - gitlab_config=$(cat $CI_PROJECT_DIR/.docker/config.json | jq -c '.auths["'$CI_REGISTRY'"]')
     - echo "$gitlab_config" | base64 -w0 > gitlab_config_b64.txt
+    - curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get_helm.sh
+    - chmod 0700 /tmp/get_helm.sh
+    - /tmp/get_helm.sh # Install Helm
     - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
     - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
     - kubectl create -f serviceaccount.yml --dry-run=client -o yaml | kubectl apply -f - # Apply the file if the resource does not exist
