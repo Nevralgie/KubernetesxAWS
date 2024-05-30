@@ -120,6 +120,8 @@ deploy:
     - curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -o jq
     - chmod +x jq
     - mv jq /usr/local/bin/
+    - yum update -y
+    - yum install -y openssl # needed for Helm chart verification
   script:
     - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
     - chmod +x ./kubectl
