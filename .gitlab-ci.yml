@@ -51,7 +51,7 @@ validate:
   artifacts:
     paths:
       - aws.cfg
-  when: on_success
+  when: manual
         # on_success
   tags:
     - build_job_docker
