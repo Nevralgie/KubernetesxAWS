@@ -93,6 +93,9 @@ apply:
     - terraform apply --auto-approve
     - EKS_CLUSTER_NAME=$(terraform output -raw cluster_name)
     - AWS_REGION=$(terraform output -raw region)
+    - echo "EKS_CLUSTER_NAME=$CLUSTER_NAME" > vars.env
+    - echo "AWS_REGION=$NODE_GROUP_NAME" >> vars.env
+
   dependencies:
     # - plan
     - validate
@@ -104,6 +107,8 @@ apply:
     paths:
       - cluster_name
       - region
+    reports:
+      dotenv: vars.env
 
 deploy:
   stage: deploy
@@ -134,6 +139,7 @@ deploy:
       artifacts: true
     - job: apply
       artifacts: true
+    - needs: vars.env
   tags:
     - build_job_docker
 
