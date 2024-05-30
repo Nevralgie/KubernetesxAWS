@@ -152,7 +152,7 @@ resource "aws_eks_access_entry" "example" {
 resource "aws_eks_access_policy_association" "example" {
   cluster_name  = aws_eks_cluster.example.name
   policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterPolicy"
-  principal_arn = aws_iam_user.example.arn
+  principal_arn = "arn:aws:iam::${var.aws_account_id}:root"
 
   access_scope {
     type       = "cluster"
