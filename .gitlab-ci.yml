@@ -124,6 +124,8 @@ deploy:
   needs:
     - job: build-docker-image
       artifacts: true
+  tags:
+    - build_job_docker
 
 
 destroy:
