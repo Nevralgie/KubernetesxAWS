@@ -134,7 +134,7 @@ deploy:
     - gitlab_config=$(cat $CI_PROJECT_DIR/.docker/config.json | jq -c '.auths["'$CI_REGISTRY'"]')
     - echo "$gitlab_config" | base64 -w0 > gitlab_config_b64.txt
     - kubectl create secret docker-registry gitlab-cred --docker-server=$CI_REGISTRY --docker-username=$CI_REGISTRY_USER --docker-password=$(cat gitlab_config_b64.txt)
-    - kubectl apply -f deployment.yaml
+    - kubectl apply -f deployment.yml
   needs:
     - job: build-docker-image
       artifacts: true
