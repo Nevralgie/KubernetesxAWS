@@ -5,11 +5,6 @@ provider "aws" {
   region = var.region
 }
 
-provider "kubernetes" {
-  host     = module.eks.cluster_endpoint
-  token    = data.aws_eks_cluster_auth.cluster.token
-  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-}
 
 # Filter out local zones, which are not currently supported 
 # with managed node groups
@@ -148,20 +143,18 @@ resource "aws_iam_role_policy_attachment" "eks_admin_AmazonEKSServicePolicy" {
   role       = aws_iam_role.eks_admin.name
 }
 
-
-resource "kubernetes_config_map" "aws_auth" {
-  metadata {
-    name      = "aws-auth"
-    namespace = "kube-system"
-  }
-
-  data = {
-    mapRoles = <<ROLES
-- rolearn: arn:aws:iam::${var.aws_account_id}:role/eks-admin
-  username: eks-admin
-  groups:
-    - system:masters
-ROLES
-  }
+resource "aws_eks_access_entry" "example" {
+  cluster_name      = module.eks.name
+  principal_arn     = "arn:aws:iam::${var.aws_account_id}:root"
+  type              = "STANDARD"
 }
 
+resource "aws_eks_access_policy_association" "example" {
+  cluster_name  = aws_eks_cluster.example.name
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterPolicy"
+  principal_arn = aws_iam_user.example.arn
+
+  access_scope {
+    type       = "cluster"
+  }
+}
