@@ -101,9 +101,9 @@ apply:
   tags:
     - build_job_docker
   artifacts:
-  paths:
-    - cluster_name
-    - region
+    paths:
+      - cluster_name
+      - region
 
 deploy:
   stage: deploy
@@ -114,6 +114,7 @@ deploy:
     name: production
   before_script:
     - whoami
+    - ls
   script:
     - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
     - chmod +x ./kubectl
