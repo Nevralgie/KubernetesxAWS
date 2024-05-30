@@ -139,7 +139,6 @@ deploy:
       artifacts: true
     - job: apply
       artifacts: true
-    - needs: vars.env
   tags:
     - build_job_docker
 
