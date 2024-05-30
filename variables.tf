@@ -6,3 +6,10 @@ variable "region" {
   type        = string
   default     = "eu-west-3"
 }
+
+variable "aws_account_id" {
+  description = "AWS Account ID"
+  type        = string
+  default     = "5774-0977-7403"
+}
+
