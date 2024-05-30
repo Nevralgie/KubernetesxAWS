@@ -137,4 +137,25 @@ resource "aws_iam_role_policy_attachment" "eks_admin_AmazonEKSClusterAdminPolicy
   role       = aws_iam_role.eks_admin.name
 }
 
+resource "aws_iam_role_policy_attachment" "eks_admin_AmazonEKSServicePolicy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
+  role       = aws_iam_role.eks_admin.name
+}
+
+
+resource "kubernetes_config_map" "aws_auth" {
+  metadata {
+    name      = "aws-auth"
+    namespace = "kube-system"
+  }
+
+  data = {
+    mapRoles = <<ROLES
+- rolearn: arn:aws:iam::${var.aws_account_id}:role/eks-admin
+  username: eks-admin
+  groups:
+    - system:masters
+ROLES
+  }
+}
 
