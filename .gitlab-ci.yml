@@ -139,8 +139,8 @@ destroy:
     - terraform init
   script:
     - terraform destroy --auto-approve
-  needs:
-    - apply
+  # needs:
+  #   - apply
   when: manual
   tags:
     - build_job_docker
