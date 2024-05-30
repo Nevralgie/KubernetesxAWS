@@ -99,6 +99,11 @@ apply:
 
 destroy:
   stage: destroy
+  image:
+    name: hashicorp/terraform:latest
+    entrypoint:
+      - '/usr/bin/env'
+      - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
   before_script:
     - rm -rf .terraform
     - terraform --version
