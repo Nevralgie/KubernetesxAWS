@@ -104,10 +104,8 @@ apply:
   tags:
     - build_job_docker
   artifacts:
-    paths:
-      - vars.env
     reports:
-      dotenv: vars.env
+      dotenv: vars.env # export variables
 
 deploy:
   stage: deploy
