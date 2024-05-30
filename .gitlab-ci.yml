@@ -134,7 +134,7 @@ deploy:
     - gitlab_config=$(cat $CI_PROJECT_DIR/.docker/config.json | jq -c '.auths["'$CI_REGISTRY'"]')
     - echo "$gitlab_config" | base64 -w0 > gitlab_config_b64.txt
     - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
-    - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json --no-fail-on-existing-resources
+    - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
     - kubectl create -f serviceaccount.yml --dry-run=client -o yaml | kubectl apply -f - # Apply the file if the resource does not exist
     - kubectl create secret docker-registry gitlab-cred --docker-server=$CI_REGISTRY --docker-username=$CI_REGISTRY_USER --docker-password=$(cat gitlab_config_b64.txt)
     - helm repo add eks https://aws.github.io/eks-charts
