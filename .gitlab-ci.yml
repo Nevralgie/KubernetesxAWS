@@ -1,3 +1,7 @@
+variables:
+  DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
+
+
 stages:
   - build
   - validate
