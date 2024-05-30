@@ -30,7 +30,7 @@ build-docker-image:
       - .docker/config.json
   tags:
     - build_job_docker
-  # when: manual
+  when: manual
 
 validate:
   stage: validate

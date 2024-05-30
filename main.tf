@@ -133,7 +133,7 @@ POLICY
 }
 
 resource "aws_iam_role_policy_attachment" "eks_admin_AmazonEKSClusterAdminPolicy" {
-  policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
   role       = aws_iam_role.eks_admin.name
 }
 
