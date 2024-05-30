@@ -23,9 +23,9 @@ build-docker-image:
     - mkdir -p $DOCKER_CONFIG  # Ensure the Docker config directory exists
     - echo "$PULL_PAT_TOKEN" | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin # Connection au registry gitlab
   script:
-    - echo "Yé boiiiiii"
-    # - docker build -t $CI_REGISTRY/ara1504621/terraform-test/app_temoin:v0.1 ./app
-    # - docker push $CI_REGISTRY/ara1504621/terraform-test/app_temoin:v0.1
+    # - echo "Yé boiiiiii"
+    - docker build -t $CI_REGISTRY/nevii/terraform_eks/app_temoin:v0.1 ./app
+    - docker push $CI_REGISTRY/nevii/terraform_eks/app_temoin:v0.1
   artifacts:
     paths:
       - .docker/config.json
