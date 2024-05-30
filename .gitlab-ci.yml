@@ -92,13 +92,18 @@ apply:
   script:
     - terraform apply --auto-approve
     - EKS_CLUSTER_NAME=$(terraform output -raw cluster_name)
-    - AWS_REGION=$(terraform output -raw cluster_name)
+    - AWS_REGION=$(terraform output -raw region)
   dependencies:
     # - plan
     - validate
-  when: manual
+    - build-docker-image
+  # when: manual
   tags:
     - build_job_docker
+  artifacts:
+  paths:
+    - cluster_name
+    - region
 
 deploy:
   stage: deploy
@@ -123,6 +128,8 @@ deploy:
     - kubectl apply -f deployment.yaml
   needs:
     - job: build-docker-image
+      artifacts: true
+    - job: apply
       artifacts: true
   tags:
     - build_job_docker
