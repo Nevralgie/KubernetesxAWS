@@ -96,7 +96,7 @@ apply:
   dependencies:
     # - plan
     - validate
-  when: on_success
+  when: manual
   tags:
     - build_job_docker
 
@@ -108,7 +108,9 @@ deploy:
   environment:
     name: production
   script:
-    - apk add --no-cache kubectl
+    - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    - chmod +x ./kubectl
+    - mv ./kubectl /usr/local/bin/kubectl
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
