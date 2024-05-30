@@ -51,8 +51,11 @@ validate:
   artifacts:
     paths:
       - aws.cfg
-  when: manual
+  when: on_success
         # on_success
+  tags:
+    - build_job_docker
+  
 
 # plan:
 #   stage: plan
@@ -90,7 +93,9 @@ apply:
   dependencies:
     # - plan
     - validate
-  when: manual
+  when: on_success
+  tags:
+    - build_job_docker
 
 destroy:
   stage: destroy
@@ -103,3 +108,5 @@ destroy:
   needs:
     - apply
   when: manual
+  tags:
+    - build_job_docker
