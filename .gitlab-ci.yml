@@ -30,7 +30,7 @@ build-docker-image:
       - .docker/config.json
   tags:
     - build_job_docker
-  when: manual
+  # when: manual
 
 validate:
   stage: validate
@@ -90,12 +90,35 @@ apply:
     - terraform init
   script:
     - terraform apply --auto-approve
+    - EKS_CLUSTER_NAME=$(terraform output -raw cluster_name)
+    - AWS_REGION=$(terraform output -raw cluster_name)
   dependencies:
     # - plan
     - validate
   when: on_success
   tags:
     - build_job_docker
+
+deploy:
+  image:
+    name: amazon/aws-cli
+    entrypoint: [""]
+  environment:
+    name: production
+  script:
+    - apk add --no-cache kubectl
+    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+    - aws configure set region $AWS_REGION
+    - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+    - gitlab_config=$(cat ~/.docker/config.json | jq -c '.auths["'$CI_REGISTRY'"]')
+    - echo "$gitlab_config" | base64 -w0 > gitlab_config_b64.txt
+    - kubectl create secret docker-registry gitlab-cred --docker-server=$CI_REGISTRY --docker-username=$CI_REGISTRY_USER --docker-password=$(cat gitlab_config_b64.txt)
+    - kubectl apply -f deployment.yaml
+  needs:
+    - job: build-docker-image
+      artifacts: true
+
 
 destroy:
   stage: destroy
