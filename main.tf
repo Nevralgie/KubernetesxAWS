@@ -133,26 +133,27 @@ POLICY
 }
 
 resource "aws_iam_role_policy_attachment" "eks_admin_AmazonEKSAdminPolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSAdminPolicy"
+  policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"
   role       = aws_iam_role.eks_admin.name
 }
 
 resource "aws_iam_role_policy_attachment" "eks_admin_AmazonEKSClusterAdminPolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+  policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
   role       = aws_iam_role.eks_admin.name
 }
 
 resource "aws_iam_role_policy_attachment" "eks_admin_AmazonEKSAdminViewPolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSReadOnlyAccess"
+  policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminViewPolicy"
   role       = aws_iam_role.eks_admin.name
 }
 
 resource "aws_iam_role_policy_attachment" "eks_admin_AmazonEKSEditPolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
+  policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy"
   role       = aws_iam_role.eks_admin.name
 }
 
-resource "aws_iam_role_policy_attachment" "eks_admin_AmazonEKSViewPolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-  role       = aws_iam_role.eks_admin.name
-}
+
+#resource "aws_iam_role_policy_attachment" "eks_admin_AmazonEKSViewPolicy" {
+  #policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+  #role       = aws_iam_role.eks_admin.name
+#}
