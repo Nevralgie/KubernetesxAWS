@@ -141,7 +141,6 @@ deploy:
     - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
     - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
     - kubectl create -f serviceaccount.yml --dry-run=client -o yaml | kubectl apply -f - # Apply the file if the resource does not exist
-    - kubectl delete secrets gitlab-cred
     - kubectl create secret docker-registry gitlab-cred --docker-server=$CI_REGISTRY --docker-username=$CI_REGISTRY_USER --docker-password=$(cat gitlab_config_b64.txt)
     - helm repo add eks https://aws.github.io/eks-charts
     - helm repo update eks
