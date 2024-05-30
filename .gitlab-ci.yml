@@ -52,7 +52,7 @@ validate:
   artifacts:
     paths:
       - aws.cfg
-  when: manual
+  # when: manual
         # on_success
   tags:
     - build_job_docker
@@ -93,7 +93,7 @@ apply:
     - terraform apply --auto-approve
     - EKS_CLUSTER_NAME=$(terraform output -raw cluster_name)
     - AWS_REGION=$(terraform output -raw region)
-    - echo "EKS_CLUSTER_NAME=$EKS_CLUSTER_NAME" > vars.env
+    - echo "EKS_CLUSTER_NAME=$EKS_CLUSTER_NAME" > vars.env # .env needs key value format, no empty lines nor comments
     - echo "AWS_REGION=$AWS_REGION" >> vars.env
 
   dependencies:
@@ -117,6 +117,8 @@ deploy:
   before_script:
     - whoami
     - ls
+    - apt update
+    - apt install jq
   script:
     - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
     - chmod +x ./kubectl
