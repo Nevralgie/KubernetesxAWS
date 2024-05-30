@@ -7,6 +7,7 @@ stages:
   - validate
   # - plan
   - apply
+  - deploy
   # - provision
   - destroy
 
@@ -100,6 +101,7 @@ apply:
     - build_job_docker
 
 deploy:
+  stage: deploy
   image:
     name: amazon/aws-cli
     entrypoint: [""]
