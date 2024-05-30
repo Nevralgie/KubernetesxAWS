@@ -144,13 +144,13 @@ resource "aws_iam_role_policy_attachment" "eks_admin_AmazonEKSServicePolicy" {
 }
 
 resource "aws_eks_access_entry" "example" {
-  cluster_name      = module.eks.name
+  cluster_name      = module.eks.cluster_name
   principal_arn     = "arn:aws:iam::${var.aws_account_id}:root"
   type              = "STANDARD"
 }
 
 resource "aws_eks_access_policy_association" "example" {
-  cluster_name  = aws_eks_cluster.example.name
+  cluster_name  = module.eks.cluster_name
   policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterPolicy"
   principal_arn = "arn:aws:iam::${var.aws_account_id}:root"
 
