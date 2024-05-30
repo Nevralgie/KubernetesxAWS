@@ -121,7 +121,7 @@ deploy:
     - chmod +x jq
     - mv jq /usr/local/bin/
     - yum update -y
-    - yum install -y openssl # needed for Helm chart verification
+    - yum install -y openssl git tar gzip build-essential # needed for Helm chart verification
   script:
     - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
     - chmod +x ./kubectl
