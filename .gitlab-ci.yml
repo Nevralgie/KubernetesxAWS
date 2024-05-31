@@ -143,8 +143,6 @@ deploy:
     - mv ./kubectl /usr/local/bin/kubectl
     - echo $EKS_CLUSTER_NAME
     - echo $AWS_REGION
-    # - base64 --decode .docker/config.json > config.json
-    - base64 config.json
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
