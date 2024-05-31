@@ -21,8 +21,10 @@ metadata:
   name: "demo-app-ingress"
   namespace: "default"
   annotations:
-    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/load-balancer-name: test-ingress
+    alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/healthcheck-path: /index.html
   labels:
     app: demo-app
 spec:
@@ -30,7 +32,7 @@ spec:
     - http:
         paths:
           - path: /*
-            pathType: ImplementationSpecific
+            pathType: Prefix
             backend:
               service:
                 name: demo-app-nodeport-service
