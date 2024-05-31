@@ -30,6 +30,9 @@ spec:
     - http:
         paths:
           - path: /*
+            pathType: ImplementationSpecific
             backend:
-              serviceName: "demo-app-nodeport-service"
-              servicePort: 80
+              service:
+                name: demo-app-nodeport-service
+                port:
+                  number: 80
