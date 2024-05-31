@@ -155,7 +155,8 @@ deploy:
     - chmod 0700 /tmp/get_helm.sh
     - /tmp/get_helm.sh # Install Helm
     - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
-    - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
+    # Uncomment if infra destroyed
+    # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
     - kubectl create -f serviceaccount.yml --dry-run=client -o yaml | kubectl apply -f - # Apply the file if the resource does not exist
     - helm repo add eks https://aws.github.io/eks-charts
     - helm repo update eks
