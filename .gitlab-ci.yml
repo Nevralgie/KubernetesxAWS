@@ -34,19 +34,19 @@ build-docker-image:
     - build_job_docker
   # when: manual
 
-prepare_secret:
-  stage: prepare
-  image: alpine
-  script:
-    - echo "$(base64 < .docker/config.json)" > config.b64
-  artifacts:
-    paths:
-      - config.b64
-  tags:
-    - build_job_docker
-  needs: 
-    - job: build-docker-image
-      artifacts: true
+# prepare_secret:
+#   stage: prepare
+#   image: alpine
+#   script:
+#     - echo "$(base64 < .docker/config.json)" > config.b64
+#   artifacts:
+#     paths:
+#       - config.b64
+#   tags:
+#     - build_job_docker
+#   needs: 
+#     - job: build-docker-image
+#       artifacts: true
 
 validate:
   stage: validate
@@ -143,7 +143,8 @@ deploy:
     - mv ./kubectl /usr/local/bin/kubectl
     - echo $EKS_CLUSTER_NAME
     - echo $AWS_REGION
-    - encoded_data=$(echo "$(cat config.b64)" | base64)
+    - base64 --decode ./docker/config.json > config.json
+    - base64 config.json
     # - cp config.b64 $CI_PROJECT_DIR
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
@@ -165,7 +166,7 @@ deploy:
     - kubectl create -f deployment.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f service.yml --dry-run=client -o yaml | kubectl apply -f -
   needs:
-    - job: prepare_secret
+    - job: build-docker-image
       artifacts: true
     - job: apply
       artifacts: true
