@@ -45,7 +45,7 @@ prepare_secret:
     - build_job_docker
   needs: 
     - job: build-docker-image
-      artifact: true
+      artifacts: true
 
 validate:
   stage: validate
