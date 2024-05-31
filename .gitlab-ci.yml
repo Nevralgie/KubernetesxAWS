@@ -143,8 +143,8 @@ deploy:
     - mv ./kubectl /usr/local/bin/kubectl
     - echo $EKS_CLUSTER_NAME
     - echo $AWS_REGION
-    - base64 --decode .docker/config.json > config.json
-    - base64 config.json
+    # - base64 --decode .docker/config.json > config.json
+    # - base64 config.json
     # - cp config.b64 $CI_PROJECT_DIR
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
@@ -161,7 +161,8 @@ deploy:
     - helm repo add eks https://aws.github.io/eks-charts
     - helm repo update eks
     # - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller
-    - kubectl create -f secret.yml --dry-run=client -o yaml | kubectl apply -f -
+    # 
+    - kubectl create secret gitlab-cred --from-file=.dockerconfigjson=.docker/config.json
     - kubectl get deployment -n kube-system aws-load-balancer-controller
     - kubectl create -f deployment.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f service.yml --dry-run=client -o yaml | kubectl apply -f -
