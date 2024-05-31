@@ -148,7 +148,7 @@ deploy:
     - aws configure set region $AWS_REGION
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
     - gitlab_config=$(cat $CI_PROJECT_DIR/.docker/config.json | jq -c '.auths["'$CI_REGISTRY'"]')
-    - echo "$gitlab_config" | base64 --decode | base64 -w0 > config-gitlab.json
+    - cat $gitlab_config
     - curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get_helm.sh
     - chmod 0700 /tmp/get_helm.sh
     - /tmp/get_helm.sh # Install Helm
