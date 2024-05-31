@@ -149,7 +149,7 @@ deploy:
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
     # - gitlab_config=$(cat $CI_PROJECT_DIR/.docker/config.json | jq -c '.auths["'$CI_REGISTRY'"]')
     - base64_config=$(cat config.b64)
-    - echo $base64_config | base64 --decode > decoded_config.json
+    - echo $base64_config | base64 --decode | base64 -w0 > decoded_config.json
     - kubectl create secret generic gitlab-cred --from-literal=.dockerconfigjson=$decoded_config.json --type=kubernetes.io/dockerconfigjson
     - curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get_helm.sh
     - chmod 0700 /tmp/get_helm.sh
