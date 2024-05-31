@@ -7,15 +7,15 @@ spec:
   type: NodePort
   selector:
     app: demo-app
-    ports:
-    - protocol: TCP
-      port: 80 # The port on which the service will be exposed
-      targetPort: 80 # The port your application is listening on
-      nodePort: 31000  # NodePort range is 30000-32767
+  ports:
+  - protocol: TCP
+    port: 80 # The port on which the service will be exposed
+    targetPort: 80 # The port your application is listening on
+    nodePort: 31000  # NodePort range is 30000-32767
       
 ---
 
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: "demo-app-ingress"
