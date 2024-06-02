@@ -32,7 +32,7 @@ build-docker-image:
       - .docker/config.json
   tags:
     - build_job_docker
-  # when: manual
+  when: manual
 
 prepare_secret:
   stage: prepare
@@ -47,6 +47,7 @@ prepare_secret:
   needs:
     - job: build-docker-image
       artifacts: true
+  when: manual
 
 validate:
   stage: validate
