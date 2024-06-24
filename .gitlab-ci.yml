@@ -160,7 +160,7 @@ clean:
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
-    - kubectl delete -f 2048_full.yaml
+    # - kubectl delete -f 2048_full.yaml
     # - eksctl delete fargateprofile --cluster $EKS_CLUSTER_NAME --name <fargate-profile-name>
     # - eksctl delete nodegroup --cluster $EKS_CLUSTER_NAME --name <node-group-name>
     - eksctl delete cluster --name $EKS_CLUSTER_NAME
