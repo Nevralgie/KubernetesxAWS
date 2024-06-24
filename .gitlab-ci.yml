@@ -10,6 +10,7 @@ stages:
   - apply
   - deploy
   # - provision
+  - monitor
   - destroy
 
 build-docker-image:
@@ -32,7 +33,7 @@ build-docker-image:
       - .docker/config.json
   tags:
     - build_job_docker
-  # when: manual
+  when: manual
 
 prepare_secret:
   stage: prepare
@@ -47,7 +48,7 @@ prepare_secret:
   needs:
     - job: build-docker-image
       artifacts: true
-  # when: manual
+  when: manual
 
 validate:
   stage: validate
@@ -68,7 +69,7 @@ validate:
   # artifacts:
   #   paths:
   #     - aws.cfg
-  # when: manual
+  when: manual
         # on_success
   tags:
     - build_job_docker
@@ -116,7 +117,7 @@ apply:
     # - plan
     - validate
     - build-docker-image
-  # when: manual
+  when: manual
   tags:
     - build_job_docker
   artifacts:
@@ -161,7 +162,7 @@ deploy:
     - kubectl create -f serviceaccount.yml --dry-run=client -o yaml | kubectl apply -f - # Apply the file if the resource does not exist
     - helm repo add eks https://aws.github.io/eks-charts
     - helm repo update eks
-    # - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller
+    - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller
     # - kubectl create -f secret.yml --dry-run=client -o yaml | kubectl apply -f 
     - kubectl get deployment -n kube-system aws-load-balancer-controller
     - kubectl create -f deployment.yml --dry-run=client -o yaml | kubectl apply -f -
@@ -173,6 +174,89 @@ deploy:
       artifacts: true
   tags:
     - build_job_docker
+  when: manual
+
+monitoring:
+  stage: monitor
+  image: amazon/aws-cli
+  before_script: 
+    - yum update -y
+    - yum install -y openssl git tar gzip build-essential
+  script:
+    - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    - chmod +x ./kubectl
+    - mv ./kubectl /usr/local/bin/kubectl
+    - echo $EKS_CLUSTER_NAME
+    - echo $AWS_REGION
+    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+    - aws configure set region $AWS_REGION
+    - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+    - curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get_helm.sh
+    - chmod 0700 /tmp/get_helm.sh
+    - /tmp/get_helm.sh
+    - helm repo add eks https://aws.github.io/eks-charts
+    - helm repo update eks
+    - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    - helm repo update
+    - | cat <<EOF > values.yaml
+        global:
+          imagePullPolicy: IfNotPresent
+
+        prometheus:
+          prometheusSpec:
+            replicas: 1
+            serviceMonitorSelectorNilUsesHelmValues: false
+            ruleSelectorNilUsesHelmValues: false
+            podMonitorSelectorNilUsesHelmValues: false
+            probeSelectorNilUsesHelmValues: false
+            externalLabels:
+              cluster: $EKS_CLUSTER_NAME
+            securityContext:
+              fsGroup: 2000
+              runAsNonRoot: true
+              runAsUser: 65534
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: [ReadWriteOnce]
+                  resources:
+                    requests:
+                      storage: 10Gi
+            service:
+              annotations:
+                service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+                service.beta.kubernetes.io/aws-load-balancer-ssl-ports: https
+              type: LoadBalancer
+
+        alertmanager:
+          alertmanagerSpec:
+            replicas: 1
+            externalLabels:
+              cluster: $EKS_CLUSTER_NAME
+            securityContext:
+              fsGroup: 2000
+              runAsNonRoot: true
+              runAsUser: 65534
+            service:
+              annotations:
+                service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+                service.beta.kubernetes.io/aws-load-balancer-ssl-ports: https
+              type: LoadBalancer
+
+        grafana:
+          grafana:
+            adminPassword: @Azurev69007
+            service:
+              annotations:
+                service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+                service.beta.kubernetes.io/aws-load-balancer-ssl-ports: https
+              type: LoadBalancer
+      EOF
+    - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -f values.yaml
+  tags:
+    - build_job_docker
+  when: manual
 
 
 destroy:
