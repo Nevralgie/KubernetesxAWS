@@ -117,22 +117,23 @@ deploy_ai:
     - helm repo update
     - helm install release k8sgpt/k8sgpt-operator -n k8sgpt-operator-system --create-namespace
     - kubectl apply -f https://raw.githubusercontent.com/mudler/LocalAI/master/examples/kubernetes/deployment.yaml
-    - kubectl apply -f - << EOF
-      apiVersion: core.k8sgpt.ai/v1alpha1
-      kind: K8sGPT
-      metadata:
-        name: k8sgpt-local-ai
-        namespace: default
-      spec:
-        ai:
-          enabled: true
-          model: ggml-gpt4all-j
-          backend: localai
-          baseUrl: http://local-ai.local-ai.svc.cluster.local:8080/v1
-        noCache: false
-        repository: ghcr.io/k8sgpt-ai/k8sgpt
-        version: v0.3.8
-      EOF
+    - |
+      kubectl apply -f - << EOF
+        apiVersion: core.k8sgpt.ai/v1alpha1
+        kind: K8sGPT
+        metadata:
+          name: k8sgpt-local-ai
+          namespace: default
+        spec:
+          ai:
+            enabled: true
+            model: ggml-gpt4all-j
+            backend: localai
+            baseUrl: http://local-ai.local-ai.svc.cluster.local:8080/v1
+          noCache: false
+          repository: ghcr.io/k8sgpt-ai/k8sgpt
+          version: v0.3.8
+        EOF
     - kubectl get results -o json | jq .
   tags:
     - build_job_docker
