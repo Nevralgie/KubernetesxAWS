@@ -1,18 +1,21 @@
-# Start from the alpine image
-FROM alpine:latest
+FROM debian:buster-slim
 
 # Install AWS CLI
-RUN apk add --no-cache --virtual .build-deps gcc libc-dev musl-dev openssl-dev python3-dev cargo \
-    && pip install --no-cache-dir awscli \
-    && apk del .build-deps
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    python3-pip \
+    && pip3 install awscli \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install necessary packages
-RUN apk add --no-cache openssl git tar gzip build-base dpkg
-
-# Download and install k8sgpt
-RUN curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.37/k8sgpt_amd64.deb \
-    && dpkg -i k8sgpt_amd64.deb \
-    && rm -rf /var/cache/apk/*
+RUN apt-get update && apt-get install -y \
+    openssl \
+    git \
+    tar \
+    gzip \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 # Download and install jq
 RUN curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -o jq \
