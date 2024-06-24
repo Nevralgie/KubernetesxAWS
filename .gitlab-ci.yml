@@ -165,3 +165,49 @@ monitoring:
     - build_job_docker
   when: manual
 
+deploy:
+  stage: deploy
+  image:
+    name: amazon/aws-cli
+    entrypoint: [""]
+  environment:
+    name: production
+  before_script:
+    - whoami
+    - ls
+    - yum update -y
+    - yum install -y openssl git tar gzip build-essential # needed for Helm chart verification
+  script:
+    - curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+    - mv /tmp/eksctl /usr/local/bin
+    - eksctl version
+    - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    - chmod +x ./kubectl
+    - mv ./kubectl /usr/local/bin/kubectl
+    - curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get_helm.sh
+    - chmod 0700 /tmp/get_helm.sh
+    - /tmp/get_helm.sh # Install Helm
+    - echo $EKS_CLUSTER_NAME
+    - echo $AWS_REGION
+    - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+    - aws configure set region $AWS_REGION
+    - helm uninstall kube-prometheus-stack
+    - kubectl delete crd alertmanagerconfigs.monitoring.coreos.com
+    - kubectl delete crd alertmanagers.monitoring.coreos.com
+    - kubectl delete crd podmonitors.monitoring.coreos.com
+    - kubectl delete crd probes.monitoring.coreos.com
+    - kubectl delete crd prometheusagents.monitoring.coreos.com
+    - kubectl delete crd prometheuses.monitoring.coreos.com
+    - kubectl delete crd prometheusrules.monitoring.coreos.com
+    - kubectl delete crd scrapeconfigs.monitoring.coreos.com
+    - kubectl delete crd servicemonitors.monitoring.coreos.com
+    - kubectl delete crd thanosrulers.monitoring.coreos.com
+    - kubectl delete -f 2048_full.yaml
+    # - eksctl delete fargateprofile --cluster $EKS_CLUSTER_NAME --name <fargate-profile-name>
+    # - eksctl delete nodegroup --cluster $EKS_CLUSTER_NAME --name <node-group-name>
+    - eksctl delete cluster --name $EKS_CLUSTER_NAME
+  tags:
+    - build_job_docker
+  when: manual
