@@ -20,7 +20,7 @@ stages:
 
 build-docker-image:
   stage: build
-  image: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox
+  image: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.1
   services:
     - docker:dind
   variables:
@@ -43,7 +43,7 @@ build-docker-image:
 deploy:
   stage: deploy
   image:
-    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.1
   environment:
     name: production
   script:
@@ -72,7 +72,7 @@ deploy:
 deploy_ai:
   stage: ai
   image:
-    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.1
   script:
     - echo $EKS_CLUSTER_NAME
     - echo $AWS_REGION
@@ -118,10 +118,7 @@ deploy_ai:
 monitoring:
   stage: monitor
   image:
-    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox
-  before_script: 
-    - yum update -y
-    - yum install -y openssl git tar gzip build-essential
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.1
   script:
     - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
     - chmod +x ./kubectl
@@ -179,7 +176,7 @@ monitoring:
 clean:
   stage: destroy
   image:
-    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.1
   environment:
     name: production
   before_script:
