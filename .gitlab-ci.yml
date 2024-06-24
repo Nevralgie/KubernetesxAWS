@@ -20,7 +20,7 @@ stages:
 
 build-docker-image:
   stage: build
-  image: docker:24.0.5
+  image: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox
   services:
     - docker:dind
   variables:
@@ -43,26 +43,10 @@ build-docker-image:
 deploy:
   stage: deploy
   image:
-    name: amazon/aws-cli
-    entrypoint: [""]
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox
   environment:
     name: production
-  before_script:
-    - whoami
-    - ls
-    - yum update -y
-    - yum install -y openssl git tar gzip build-essential # needed for Helm chart verification
   script:
-    - curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-    - mv /tmp/eksctl /usr/local/bin
-    - eksctl version
-    - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-    - chmod +x ./kubectl
-    - mv ./kubectl /usr/local/bin/kubectl
-    - curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get_helm.sh
-    - chmod 0700 /tmp/get_helm.sh
-    - /tmp/get_helm.sh # Install Helm
-    - echo $EKS_CLUSTER_NAME
     - echo $AWS_REGION
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
@@ -88,22 +72,8 @@ deploy:
 deploy_ai:
   stage: ai
   image:
-    name: amazon/aws-cli
-    entrypoint: [""]
-  before_script: 
-    - yum update -y
-    - yum install -y dpkg openssl git tar gzip build-essential
-    - curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.37/k8sgpt_amd64.deb
-    - dpkg -i k8sgpt_amd64.deb
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox
   script:
-    - curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.37/k8sgpt_amd64.deb
-    - dpkg -i k8sgpt_amd64.deb
-    - curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -o jq
-    - chmod +x jq
-    - mv jq /usr/local/bin/
-    - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-    - chmod +x ./kubectl
-    - mv ./kubectl /usr/local/bin/kubectl
     - echo $EKS_CLUSTER_NAME
     - echo $AWS_REGION
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
@@ -148,8 +118,7 @@ deploy_ai:
 monitoring:
   stage: monitor
   image:
-    name: amazon/aws-cli
-    entrypoint: [""]
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox
   before_script: 
     - yum update -y
     - yum install -y openssl git tar gzip build-essential
@@ -210,8 +179,7 @@ monitoring:
 clean:
   stage: destroy
   image:
-    name: amazon/aws-cli
-    entrypoint: [""]
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox
   environment:
     name: production
   before_script:
