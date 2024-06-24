@@ -1,0 +1,5 @@
+Delete the Kubernetes resources: Use kubectl to delete the Kubernetes resources that you created for your stack. For example, you can run kubectl delete -f <filename>.yaml to delete the resources defined in a YAML file.
+Delete the Helm releases: If you deployed any Helm charts, you can use helm uninstall to delete the Helm releases. For example, you can run helm uninstall <release-name> -n <namespace> to delete a Helm release.
+Delete the Fargate profile: Run eksctl delete fargateprofile --cluster <cluster-name> --name <fargate-profile-name> to delete the Fargate profile.
+Delete the node group: If you created any node groups, you can run eksctl delete nodegroup --cluster <cluster-name> --name <node-group-name> to delete them.
+Delete the EKS cluster: Finally, you can run eksctl delete cluster --name <cluster-name> to delete the EKS cluster. This will delete all the resources associated with the cluster, including the VPC, subnets, security groups, and IAM roles.
