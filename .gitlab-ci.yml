@@ -25,14 +25,14 @@ build-docker-image:
     - echo "$PULL_PAT_TOKEN" | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin # Connection au registry gitlab
   script:
     - echo "Yé boiiiiii"
-    # - docker build -t $CI_REGISTRY/nevii/terraform_eks/app_temoin:v0.1 ./app
-    # - docker push $CI_REGISTRY/nevii/terraform_eks/app_temoin:v0.1
+    - docker build -t $CI_REGISTRY/nevii/terraform_eks/app_temoin:v0.1 ./app
+    - docker push $CI_REGISTRY/nevii/terraform_eks/app_temoin:v0.1
   artifacts:
     paths:
       - .docker/config.json
   tags:
     - build_job_docker
-  when: manual
+  # when: manual
 
 prepare_secret:
   stage: prepare
@@ -47,7 +47,7 @@ prepare_secret:
   needs:
     - job: build-docker-image
       artifacts: true
-  when: manual
+  # when: manual
 
 validate:
   stage: validate
@@ -68,7 +68,7 @@ validate:
   # artifacts:
   #   paths:
   #     - aws.cfg
-  when: manual
+  # when: manual
         # on_success
   tags:
     - build_job_docker
