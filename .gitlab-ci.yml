@@ -20,14 +20,13 @@ stages:
 
 build-docker-image:
   stage: build
-    image: docker:24.0.5
-    services:
-      - docker:dind
-   variables:
-     DOCKER_DRIVER: overlay2
-     DOCKER_TLS_CERTDIR: "" # Vide pour l'instant pour établie la connection entre les conteneurs
-    before_script:
-    - mkdir -p $DOCKER_CONFIG  # Ensure the Docker config directory exists
+  image: docker:24.0.5
+  services:
+    - docker:dind
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: "" # Vide pour l'instant pour établie la connection entre les conteneurs
+  before_script:
     - echo "$PULL_PAT_TOKEN" | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin # Connection au registry gitlab
   script:
     - echo "Yé boiiiiii"
@@ -37,7 +36,7 @@ build-docker-image:
     paths:
       - .docker/config.json
   tags:
-   - build_job_docker
+  - build_job_docker
   when: manual
 
 
