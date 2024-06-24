@@ -90,7 +90,7 @@ deploy_ai:
     - yum update -y
     - yum install -y openssl git tar gzip build-essential
     - curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.37/k8sgpt_amd64.deb
-    - sudo dpkg -i k8sgpt_amd64.deb
+    - dpkg -i k8sgpt_amd64.deb
   script:
     - curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -o jq
     - chmod +x jq
