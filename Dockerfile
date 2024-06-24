@@ -1,15 +1,13 @@
-# Start from a base image
-FROM amazon/aws-cli
+# Start from the alpine image
+FROM alpine:latest
 
-# Update the package lists
-RUN yum update -y
+# Install AWS CLI
+RUN apk add --no-cache py-pip \
+    && pip install awscli \
+    && rm -rf /root/.cache/pip
 
 # Install necessary packages
-RUN yum install -y dpkg openssl git tar gzip build-essential
-
-# Download and install k8sgpt
-RUN curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.37/k8sgpt_amd64.deb \
-    && dpkg -i k8sgpt_amd64.deb
+RUN apk add --no-cache dpkg openssl git tar gzip build-base
 
 # Download and install jq
 RUN curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -o jq \
