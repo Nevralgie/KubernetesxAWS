@@ -1,4 +1,4 @@
--variables:
+variables:
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
   EKS_CLUSTER_NAME: "demo-eks-appv1"
   AWS_REGION: "eu-west-3"
