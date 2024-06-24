@@ -165,8 +165,8 @@ monitoring:
     - build_job_docker
   when: manual
 
-deploy:
-  stage: deploy
+clean:
+  stage: destroy
   image:
     name: amazon/aws-cli
     entrypoint: [""]
