@@ -126,7 +126,7 @@ monitoring:
         alertmanagerSpec:
           replicas: 2
       EOF
-    - helm uninstall kube-prometheus-stack
+    # - helm uninstall kube-prometheus-stack
     - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -f values.yaml
   tags:
     - build_job_docker
