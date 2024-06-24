@@ -199,7 +199,8 @@ monitoring:
     - helm repo update eks
     - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
     - helm repo update
-    - | cat <<EOF > values.yaml
+    - | 
+        cat <<EOF > values.yaml
         global:
           imagePullPolicy: IfNotPresent
 
