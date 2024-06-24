@@ -88,10 +88,12 @@ deploy_ai:
     entrypoint: [""]
   before_script: 
     - yum update -y
-    - yum install -y openssl git tar gzip build-essential
+    - yum install -y dpkg openssl git tar gzip build-essential
     - curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.37/k8sgpt_amd64.deb
     - dpkg -i k8sgpt_amd64.deb
   script:
+    - curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.37/k8sgpt_amd64.deb
+    - dpkg -i k8sgpt_amd64.deb
     - curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -o jq
     - chmod +x jq
     - mv jq /usr/local/bin/
