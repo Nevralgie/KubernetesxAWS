@@ -127,6 +127,11 @@ monitoring:
           replicas: 2
       EOF
     # - helm uninstall kube-prometheus-stack
+    - helm list --all-namespaces | grep kube-prometheus-stack
+    - helm uninstall kube-prometheus-stack --namespace default --force
+    - kubectl delete all --selector=app.kubernetes.io/instance=kube-prometheus-stack --namespace default
+    - kubectl delete configmap --selector=app.kubernetes.io/instance=kube-prometheus-stack --namespace default
+    - kubectl delete secret --selector=app.kubernetes.io/instance=kube-prometheus-stack --namespace default
     - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -f values.yaml
   tags:
     - build_job_docker
