@@ -13,27 +13,27 @@ stages:
   - monitor
   - destroy
 
-build-docker-image:
-  stage: build
-  image: docker:24.0.5
-  services:
-    - docker:dind
-  variables:
-    DOCKER_DRIVER: overlay2
-    DOCKER_TLS_CERTDIR: "" # Vide pour l'instant pour établie la connection entre les conteneurs
-  before_script:
-    - mkdir -p $DOCKER_CONFIG  # Ensure the Docker config directory exists
-    - echo "$PULL_PAT_TOKEN" | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin # Connection au registry gitlab
-  script:
-    - echo "Yé boiiiiii"
-    - docker build -t $CI_REGISTRY/nevii/terraform_eks/app_temoin:v0.1 ./app
-    - docker push $CI_REGISTRY/nevii/terraform_eks/app_temoin:v0.1
-  artifacts:
-    paths:
-      - .docker/config.json
-  tags:
-    - build_job_docker
-  when: manual
+# build-docker-image:
+#   stage: build
+#   image: docker:24.0.5
+#   services:
+#     - docker:dind
+#   variables:
+#     DOCKER_DRIVER: overlay2
+#     DOCKER_TLS_CERTDIR: "" # Vide pour l'instant pour établie la connection entre les conteneurs
+#   before_script:
+#     - mkdir -p $DOCKER_CONFIG  # Ensure the Docker config directory exists
+#     - echo "$PULL_PAT_TOKEN" | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin # Connection au registry gitlab
+#   script:
+#     - echo "Yé boiiiiii"
+#     - docker build -t $CI_REGISTRY/nevii/terraform_eks/app_temoin:v0.1 ./app
+#     - docker push $CI_REGISTRY/nevii/terraform_eks/app_temoin:v0.1
+#   artifacts:
+#     paths:
+#       - .docker/config.json
+#   tags:
+#     - build_job_docker
+#   when: manual
 
 # prepare_secret:
 #   stage: prepare
@@ -114,9 +114,11 @@ apply:
     - echo "AWS_REGION=$AWS_REGION" >> vars.env
 
   dependencies:
-    # - plan
-    - validate
-    - build-docker-image
+    # # - plan
+    # - validate
+    # - build-docker-image
+  # needs: 
+  #   - build-docker-image
   when: manual
   tags:
     - build_job_docker
@@ -163,7 +165,7 @@ deploy:
     - helm repo add eks https://aws.github.io/eks-charts
     - helm repo update eks
     # Uncomment if it is already deployed
-    # - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller
+    - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller
     # - kubectl create -f secret.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl get deployment -n kube-system aws-load-balancer-controller
     - kubectl create -f deployment.yml --dry-run=client -o yaml | kubectl apply -f -
