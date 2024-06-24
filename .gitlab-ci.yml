@@ -179,8 +179,9 @@ deploy:
 
 monitoring:
   stage: monitor
-  image: amazon/aws-cli
-  entrypoint: [""]
+  image:
+    name: amazon/aws-cli
+    entrypoint: [""]
   before_script: 
     - yum update -y
     - yum install -y openssl git tar gzip build-essential
