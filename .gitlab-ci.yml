@@ -15,6 +15,7 @@ stages:
   - deploy
   # - provision
   - monitor
+  - ai
   - destroy
 
 # plan:
@@ -76,6 +77,63 @@ deploy:
     - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller
     - sleep 30 # aws-load-balancer-webhook-service needs time to be up and running, or else next line will fail
     - kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/examples/2048/2048_full.yaml
+  tags:
+    - build_job_docker
+  when: manual
+
+deploy_ai:
+  stage: ai
+  image:
+    name: amazon/aws-cli
+    entrypoint: [""]
+  before_script: 
+    - yum update -y
+    - yum install -y openssl git tar gzip build-essential
+    - curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.37/k8sgpt_amd64.deb
+    - sudo dpkg -i k8sgpt_amd64.deb
+  script:
+    - curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -o jq
+    - chmod +x jq
+    - mv jq /usr/local/bin/
+    - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    - chmod +x ./kubectl
+    - mv ./kubectl /usr/local/bin/kubectl
+    - echo $EKS_CLUSTER_NAME
+    - echo $AWS_REGION
+    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+    - aws configure set region $AWS_REGION
+    - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+    - curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get_helm.sh
+    - chmod 0700 /tmp/get_helm.sh
+    - /tmp/get_helm.sh
+    - helm repo add eks https://aws.github.io/eks-charts
+    - helm repo update eks
+    - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    - helm repo update
+    - curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.37/k8sgpt_amd64.deb
+    - sudo dpkg -i k8sgpt_amd64.deb
+    - helm repo add k8sgpt https://charts.k8sgpt.ai/
+    - helm repo update
+    - helm install release k8sgpt/k8sgpt-operator -n k8sgpt-operator-system --create-namespace
+    - kubectl apply -f https://raw.githubusercontent.com/mudler/LocalAI/master/examples/kubernetes/deployment.yaml
+    - kubectl apply -f - << EOF
+      apiVersion: core.k8sgpt.ai/v1alpha1
+      kind: K8sGPT
+      metadata:
+        name: k8sgpt-local-ai
+        namespace: default
+      spec:
+        ai:
+          enabled: true
+          model: ggml-gpt4all-j
+          backend: localai
+          baseUrl: http://local-ai.local-ai.svc.cluster.local:8080/v1
+        noCache: false
+        repository: ghcr.io/k8sgpt-ai/k8sgpt
+        version: v0.3.8
+      EOF
+    - kubectl get results -o json | jq .
   tags:
     - build_job_docker
   when: manual
