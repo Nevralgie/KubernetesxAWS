@@ -2,12 +2,17 @@
 FROM alpine:latest
 
 # Install AWS CLI
-RUN apk add --no-cache py-pip \
-    && pip install awscli \
-    && rm -rf /root/.cache/pip
+RUN apk add --no-cache --virtual .build-deps gcc libc-dev musl-dev openssl-dev python3-dev cargo \
+    && pip install --no-cache-dir awscli \
+    && apk del .build-deps
 
 # Install necessary packages
-RUN apk add --no-cache dpkg openssl git tar gzip build-base
+RUN apk add --no-cache openssl git tar gzip build-base dpkg
+
+# Download and install k8sgpt
+RUN curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.37/k8sgpt_amd64.deb \
+    && dpkg -i k8sgpt_amd64.deb \
+    && rm -rf /var/cache/apk/*
 
 # Download and install jq
 RUN curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -o jq \
