@@ -200,59 +200,59 @@ monitoring:
     - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
     - helm repo update
     - | 
-        cat <<EOF > values.yaml
-        global:
-          imagePullPolicy: IfNotPresent
+      cat <<EOF > values.yaml
+      global:
+        imagePullPolicy: IfNotPresent
 
-        prometheus:
-          prometheusSpec:
-            replicas: 1
-            serviceMonitorSelectorNilUsesHelmValues: false
-            ruleSelectorNilUsesHelmValues: false
-            podMonitorSelectorNilUsesHelmValues: false
-            probeSelectorNilUsesHelmValues: false
-            externalLabels:
-              cluster: $EKS_CLUSTER_NAME
-            securityContext:
-              fsGroup: 2000
-              runAsNonRoot: true
-              runAsUser: 65534
-            storageSpec:
-              volumeClaimTemplate:
-                spec:
-                  accessModes: [ReadWriteOnce]
-                  resources:
-                    requests:
-                      storage: 10Gi
-            service:
-              annotations:
-                service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
-                service.beta.kubernetes.io/aws-load-balancer-ssl-ports: https
-              type: LoadBalancer
+      prometheus:
+        prometheusSpec:
+          replicas: 1
+          serviceMonitorSelectorNilUsesHelmValues: false
+          ruleSelectorNilUsesHelmValues: false
+          podMonitorSelectorNilUsesHelmValues: false
+          probeSelectorNilUsesHelmValues: false
+          externalLabels:
+            cluster: $EKS_CLUSTER_NAME
+          securityContext:
+            fsGroup: 2000
+            runAsNonRoot: true
+            runAsUser: 65534
+          storageSpec:
+            volumeClaimTemplate:
+              spec:
+                accessModes: [ReadWriteOnce]
+                resources:
+                  requests:
+                    storage: 10Gi
+          service:
+            annotations:
+              service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+              service.beta.kubernetes.io/aws-load-balancer-ssl-ports: https
+            type: LoadBalancer
 
-        alertmanager:
-          alertmanagerSpec:
-            replicas: 1
-            externalLabels:
-              cluster: $EKS_CLUSTER_NAME
-            securityContext:
-              fsGroup: 2000
-              runAsNonRoot: true
-              runAsUser: 65534
-            service:
-              annotations:
-                service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
-                service.beta.kubernetes.io/aws-load-balancer-ssl-ports: https
-              type: LoadBalancer
+      alertmanager:
+        alertmanagerSpec:
+          replicas: 1
+          externalLabels:
+            cluster: $EKS_CLUSTER_NAME
+          securityContext:
+            fsGroup: 2000
+            runAsNonRoot: true
+            runAsUser: 65534
+          service:
+            annotations:
+              service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+              service.beta.kubernetes.io/aws-load-balancer-ssl-ports: https
+            type: LoadBalancer
 
+      grafana:
         grafana:
-          grafana:
-            adminPassword: @Azurev69007
-            service:
-              annotations:
-                service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
-                service.beta.kubernetes.io/aws-load-balancer-ssl-ports: https
-              type: LoadBalancer
+          adminPassword: @Azurev69007
+          service:
+            annotations:
+              service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+              service.beta.kubernetes.io/aws-load-balancer-ssl-ports: https
+            type: LoadBalancer
       EOF
     - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -f values.yaml
   tags:
