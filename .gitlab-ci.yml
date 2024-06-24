@@ -14,6 +14,7 @@ stages:
   - apply
   - deploy
   # - provision
+  - monitor
   - destroy
 
 # plan:
