@@ -35,20 +35,20 @@ build-docker-image:
     - build_job_docker
   when: manual
 
-prepare_secret:
-  stage: prepare
-  image: alpine
-  script:
-    - cat .docker/config.json | base64 -w0 > config.b64
-  artifacts:
-    paths:
-      - config.b64
-  tags:
-    - build_job_docker
-  needs:
-    - job: build-docker-image
-      artifacts: true
-  when: manual
+# prepare_secret:
+#   stage: prepare
+#   image: alpine
+#   script:
+#     - cat .docker/config.json | base64 -w0 > config.b64
+#   artifacts:
+#     paths:
+#       - config.b64
+#   tags:
+#     - build_job_docker
+#   needs:
+#     - job: build-docker-image
+#       artifacts: true
+#   when: manual
 
 validate:
   stage: validate
@@ -169,8 +169,8 @@ deploy:
     - kubectl create -f deployment.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f service.yml --dry-run=client -o yaml | kubectl apply -f -
   needs:
-    - job: prepare_secret
-      artifacts: true
+    # - job: prepare_secret
+    #   artifacts: true
     - job: apply
       artifacts: true
   tags:
