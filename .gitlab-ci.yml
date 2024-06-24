@@ -250,7 +250,7 @@ monitoring:
 
       grafana:
         grafana:
-          adminPassword: @Azurev69007
+          adminPassword: "@Azurev69007"
           service:
             annotations:
               service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
