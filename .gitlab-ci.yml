@@ -1,8 +1,8 @@
-variables:
+-variables:
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
   EKS_CLUSTER_NAME: "demo-eks-appv1"
   AWS_REGION: "eu-west-3"
-  NODE_COUNT: "4"
+  NODE_COUNT: "3"
   ACCOUNT_ID: "577409777403"
 
 
@@ -105,60 +105,26 @@ monitoring:
     - helm repo update eks
     - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
     - helm repo update
-    - | 
+    - |
       cat <<EOF > values.yaml
-      global:
-        imagePullPolicy: IfNotPresent
-
       prometheus:
         prometheusSpec:
-          replicas: 1
           serviceMonitorSelectorNilUsesHelmValues: false
           ruleSelectorNilUsesHelmValues: false
           podMonitorSelectorNilUsesHelmValues: false
           probeSelectorNilUsesHelmValues: false
-          externalLabels:
-            cluster: $EKS_CLUSTER_NAME
-          securityContext:
-            fsGroup: 2000
-            runAsNonRoot: true
-            runAsUser: 65534
-          storageSpec:
-            volumeClaimTemplate:
-              spec:
-                accessModes: [ReadWriteOnce]
-                resources:
-                  requests:
-                    storage: 10Gi
-          service:
-            annotations:
-              service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
-              service.beta.kubernetes.io/aws-load-balancer-ssl-ports: https
-            type: LoadBalancer
-
+      grafana:
+        adminPassword: your-grafana-admin-password
+        sidecar:
+          dashboards:
+            enabled: true
+          datasources:
+            enabled: true
+        service:
+          type: LoadBalancer # Change to ClusterIP for internal access
       alertmanager:
         alertmanagerSpec:
-          replicas: 1
-          externalLabels:
-            cluster: $EKS_CLUSTER_NAME
-          securityContext:
-            fsGroup: 2000
-            runAsNonRoot: true
-            runAsUser: 65534
-          service:
-            annotations:
-              service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
-              service.beta.kubernetes.io/aws-load-balancer-ssl-ports: https
-            type: LoadBalancer
-
-      grafana:
-        grafana:
-          adminPassword: "@Azurev69007"
-          service:
-            annotations:
-              service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
-              service.beta.kubernetes.io/aws-load-balancer-ssl-ports: https
-            type: LoadBalancer
+          replicas: 2
       EOF
     - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -f values.yaml
   tags:
