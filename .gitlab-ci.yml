@@ -165,16 +165,17 @@ deploy:
     - helm repo add eks https://aws.github.io/eks-charts
     - helm repo update eks
     # Uncomment if it is already deployed
-    - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller
+    # - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller
     # - kubectl create -f secret.yml --dry-run=client -o yaml | kubectl apply -f -
+    - sleep 15
     - kubectl get deployment -n kube-system aws-load-balancer-controller
     - kubectl create -f deployment.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f service.yml --dry-run=client -o yaml | kubectl apply -f -
-  needs:
+  # needs:
     # - job: prepare_secret
     #   artifacts: true
-    - job: apply
-      artifacts: true
+    # - job: apply
+    #   artifacts: true
   tags:
     - build_job_docker
   when: manual
