@@ -159,18 +159,18 @@ clean:
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
-    # - helm uninstall kube-prometheus-stack
-    # - kubectl delete crd alertmanagerconfigs.monitoring.coreos.com
-    # - kubectl delete crd alertmanagers.monitoring.coreos.com
-    # - kubectl delete crd podmonitors.monitoring.coreos.com
-    # - kubectl delete crd probes.monitoring.coreos.com
-    # - kubectl delete crd prometheusagents.monitoring.coreos.com
-    # - kubectl delete crd prometheuses.monitoring.coreos.com
-    # - kubectl delete crd prometheusrules.monitoring.coreos.com
-    # - kubectl delete crd scrapeconfigs.monitoring.coreos.com
-    # - kubectl delete crd servicemonitors.monitoring.coreos.com
-    # - kubectl delete crd thanosrulers.monitoring.coreos.com
-    # - kubectl delete -f 2048_full.yaml
+    - helm uninstall kube-prometheus-stack
+    - kubectl delete crd alertmanagerconfigs.monitoring.coreos.com
+    - kubectl delete crd alertmanagers.monitoring.coreos.com
+    - kubectl delete crd podmonitors.monitoring.coreos.com
+    - kubectl delete crd probes.monitoring.coreos.com
+    - kubectl delete crd prometheusagents.monitoring.coreos.com
+    - kubectl delete crd prometheuses.monitoring.coreos.com
+    - kubectl delete crd prometheusrules.monitoring.coreos.com
+    - kubectl delete crd scrapeconfigs.monitoring.coreos.com
+    - kubectl delete crd servicemonitors.monitoring.coreos.com
+    - kubectl delete crd thanosrulers.monitoring.coreos.com
+    - kubectl delete -f 2048_full.yaml
     # - eksctl delete fargateprofile --cluster $EKS_CLUSTER_NAME --name <fargate-profile-name>
     # - eksctl delete nodegroup --cluster $EKS_CLUSTER_NAME --name <node-group-name>
     - eksctl delete cluster --name $EKS_CLUSTER_NAME
