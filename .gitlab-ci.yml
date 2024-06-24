@@ -64,7 +64,7 @@ deploy:
     - eksctl create cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --version 1.29 --alb-ingress-access --nodes $NODE_COUNT
     # - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
     # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
-    #- aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
+    # - aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
     - eksctl utils associate-iam-oidc-provider --region=$AWS_REGION --cluster=$EKS_CLUSTER_NAME --approve
     - aws eks create-access-entry --cluster-name $EKS_CLUSTER_NAME --principal-arn arn:aws:iam::$ACCOUNT_ID:root --type STANDARD --username admin_eks
     - aws eks associate-access-policy --cluster-name $EKS_CLUSTER_NAME  --principal-arn arn:aws:iam::$ACCOUNT_ID:root --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy --access-scope type=cluster
@@ -77,3 +77,90 @@ deploy:
     - kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/examples/2048/2048_full.yaml
   tags:
     - build_job_docker
+  when: manual
+
+monitoring:
+  stage: monitor
+  image:
+    name: amazon/aws-cli
+    entrypoint: [""]
+  before_script: 
+    - yum update -y
+    - yum install -y openssl git tar gzip build-essential
+  script:
+    - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    - chmod +x ./kubectl
+    - mv ./kubectl /usr/local/bin/kubectl
+    - echo $EKS_CLUSTER_NAME
+    - echo $AWS_REGION
+    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+    - aws configure set region $AWS_REGION
+    - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+    - curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get_helm.sh
+    - chmod 0700 /tmp/get_helm.sh
+    - /tmp/get_helm.sh
+    - helm repo add eks https://aws.github.io/eks-charts
+    - helm repo update eks
+    - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    - helm repo update
+    - | 
+      cat <<EOF > values.yaml
+      global:
+        imagePullPolicy: IfNotPresent
+
+      prometheus:
+        prometheusSpec:
+          replicas: 1
+          serviceMonitorSelectorNilUsesHelmValues: false
+          ruleSelectorNilUsesHelmValues: false
+          podMonitorSelectorNilUsesHelmValues: false
+          probeSelectorNilUsesHelmValues: false
+          externalLabels:
+            cluster: $EKS_CLUSTER_NAME
+          securityContext:
+            fsGroup: 2000
+            runAsNonRoot: true
+            runAsUser: 65534
+          storageSpec:
+            volumeClaimTemplate:
+              spec:
+                accessModes: [ReadWriteOnce]
+                resources:
+                  requests:
+                    storage: 10Gi
+          service:
+            annotations:
+              service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+              service.beta.kubernetes.io/aws-load-balancer-ssl-ports: https
+            type: LoadBalancer
+
+      alertmanager:
+        alertmanagerSpec:
+          replicas: 1
+          externalLabels:
+            cluster: $EKS_CLUSTER_NAME
+          securityContext:
+            fsGroup: 2000
+            runAsNonRoot: true
+            runAsUser: 65534
+          service:
+            annotations:
+              service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+              service.beta.kubernetes.io/aws-load-balancer-ssl-ports: https
+            type: LoadBalancer
+
+      grafana:
+        grafana:
+          adminPassword: "@Azurev69007"
+          service:
+            annotations:
+              service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+              service.beta.kubernetes.io/aws-load-balancer-ssl-ports: https
+            type: LoadBalancer
+      EOF
+    - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -f values.yaml
+  tags:
+    - build_job_docker
+  when: manual
+
