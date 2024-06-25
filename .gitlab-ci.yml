@@ -180,23 +180,15 @@ clean:
   environment:
     name: production
   before_script:
-    - whoami
-    - ls
-    - yum update -y
-    - yum install -y openssl git tar gzip build-essential # needed for Helm chart verification
+      - sleep 5
+    # - yum install -y openssl git tar gzip build-essential # needed for Helm chart verification
   script:
-    - curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-    - mv /tmp/eksctl /usr/local/bin
-    - eksctl version
-    - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-    - chmod +x ./kubectl
-    - mv ./kubectl /usr/local/bin/kubectl
     - curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get_helm.sh
     - chmod 0700 /tmp/get_helm.sh
     - /tmp/get_helm.sh # Install Helm
     - echo $EKS_CLUSTER_NAME
     - echo $AWS_REGION
-    - aws eks update-kubeconfig --name demo-eks-appv1 # $EKS_CLUSTER_NAME
+    - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME  # $EKS_CLUSTER_NAME demo-eks-appv1
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
