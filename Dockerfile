@@ -22,8 +22,8 @@ RUN curl -L "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscl
 
 # Install Helm
 RUN curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get_helm.sh \
-    chmod 0700 /tmp/get_helm.sh \
-    /tmp/get_helm.sh
+    && chmod 0700 /tmp/get_helm.sh \
+    && /tmp/get_helm.sh
 
 # Download and install jq
 RUN curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -o jq \
