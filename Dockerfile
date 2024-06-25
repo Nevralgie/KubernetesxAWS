@@ -1,9 +1,17 @@
 FROM debian:buster-slim
 
-# Install essentials
+# Install necessary packages
 RUN apt-get update && apt-get install -y \
-    build-essential \
+    openssl \
+    git \
+    tar \
+    gzip \
     curl \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install python for AWS Cli
+RUN apt-get update && apt-get install -y \
     python3-pip \
     && pip3 install \
     && rm -rf /var/lib/apt/lists/*
@@ -16,15 +24,6 @@ RUN curl -L "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscl
 RUN curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get_helm.sh \
     chmod 0700 /tmp/get_helm.sh \
     /tmp/get_helm.sh
-
-# Install necessary packages
-RUN apt-get update && apt-get install -y \
-    openssl \
-    git \
-    tar \
-    gzip \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
 
 # Download and install jq
 RUN curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -o jq \
