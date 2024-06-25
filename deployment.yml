@@ -27,6 +27,6 @@ spec:
         resources: {}
       volumes:
       - name: model-volume
-        hostPath:
-          path: /models
+        persistentVolumeClaim:
+          claimName: model-pvc
 
