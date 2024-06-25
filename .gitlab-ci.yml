@@ -20,7 +20,7 @@ stages:
 
 build-docker-image:
   stage: build
-  image: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.1
+  image: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.2
   services:
     - docker:dind
   variables:
@@ -30,8 +30,8 @@ build-docker-image:
     - echo "$PULL_PAT_TOKEN" | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin # Connection au registry gitlab
   script:
     - echo "Yé boiiiiii"
-    - docker build -t $CI_REGISTRY/nevii/terraform_eks/awsclitoolbox:v0.1 .
-    - docker push $CI_REGISTRY/nevii/terraform_eks/awsclitoolbox:v0.1
+    - docker build -t $CI_REGISTRY/nevii/terraform_eks/awsclitoolbox:v0.2 .
+    - docker push $CI_REGISTRY/nevii/terraform_eks/awsclitoolbox:v0.2
   artifacts:
     paths:
       - .docker/config.json
@@ -43,7 +43,7 @@ build-docker-image:
 deploy:
   stage: deploy
   image:
-    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.1
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.2
   environment:
     name: production
   script:
@@ -51,13 +51,13 @@ deploy:
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
-    - eksctl create cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --version 1.29 --alb-ingress-access --nodes $NODE_COUNT
+    - eksctl create cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --version 1.29 --alb-ingress-access --nodes $NODE_COUNT || true
     # - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
     # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
     # - aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
-    - eksctl utils associate-iam-oidc-provider --region=$AWS_REGION --cluster=$EKS_CLUSTER_NAME --approve
-    - aws eks create-access-entry --cluster-name $EKS_CLUSTER_NAME --principal-arn arn:aws:iam::$ACCOUNT_ID:root --type STANDARD --username admin_eks
-    - aws eks associate-access-policy --cluster-name $EKS_CLUSTER_NAME  --principal-arn arn:aws:iam::$ACCOUNT_ID:root --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy --access-scope type=cluster
+    - eksctl utils associate-iam-oidc-provider --region=$AWS_REGION --cluster=$EKS_CLUSTER_NAME --approve || true
+    - aws eks create-access-entry --cluster-name $EKS_CLUSTER_NAME --principal-arn arn:aws:iam::$ACCOUNT_ID:root --type STANDARD --username admin_eks || true
+    - aws eks associate-access-policy --cluster-name $EKS_CLUSTER_NAME  --principal-arn arn:aws:iam::$ACCOUNT_ID:root --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy --access-scope type=cluster || true
     - eksctl create iamserviceaccount --cluster=$EKS_CLUSTER_NAME --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::$ACCOUNT_ID:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
     # - aws eks describe-addon --cluster-name $EKS_CLUSTER_NAME --addon-name vpc-cni --query addon.addonVersion --output text
     - eksctl create addon --cluster $EKS_CLUSTER_NAME --name vpc-cni --version latest --force # Necessary for aws load balancer controller
@@ -72,7 +72,7 @@ deploy:
 deploy_ai:
   stage: ai
   image:
-    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.1
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.2
   script:
     - echo $EKS_CLUSTER_NAME
     - echo $AWS_REGION
@@ -119,20 +119,20 @@ deploy_ai:
 monitoring:
   stage: monitor
   image:
-    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.1
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.2
   script:
-    - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-    - chmod +x ./kubectl
-    - mv ./kubectl /usr/local/bin/kubectl
+    # - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    # - chmod +x ./kubectl
+    # - mv ./kubectl /usr/local/bin/kubectl
     - echo $EKS_CLUSTER_NAME
     - echo $AWS_REGION
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-    - curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get_helm.sh
-    - chmod 0700 /tmp/get_helm.sh
-    - /tmp/get_helm.sh
+    # - curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get_helm.sh
+    # - chmod 0700 /tmp/get_helm.sh
+    # - /tmp/get_helm.sh
     - helm repo add eks https://aws.github.io/eks-charts
     - helm repo update eks
     - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
@@ -177,16 +177,16 @@ monitoring:
 clean:
   stage: destroy
   image:
-    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.1
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.2
   environment:
     name: production
   before_script:
       - sleep 5
     # - yum install -y openssl git tar gzip build-essential # needed for Helm chart verification
   script:
-    - curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get_helm.sh
-    - chmod 0700 /tmp/get_helm.sh
-    - /tmp/get_helm.sh # Install Helm
+    # - curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get_helm.sh
+    # - chmod 0700 /tmp/get_helm.sh
+    # - /tmp/get_helm.sh # Install Helm
     - echo $EKS_CLUSTER_NAME
     - echo $AWS_REGION
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME  # $EKS_CLUSTER_NAME demo-eks-appv1

@@ -8,9 +8,14 @@ RUN apt-get update && apt-get install -y \
     && pip3 install \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+RUN curl -L "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
     unzip awscliv2.zip \
     ./aws/install
+
+# Install Helm
+RUN curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get_helm.sh \
+    chmod 0700 /tmp/get_helm.sh \
+    /tmp/get_helm.sh
 
 # Install necessary packages
 RUN apt-get update && apt-get install -y \
