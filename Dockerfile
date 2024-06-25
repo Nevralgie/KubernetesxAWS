@@ -1,12 +1,16 @@
 FROM debian:buster-slim
 
-# Install AWS CLI
+# Install essentials
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
     python3-pip \
-    && pip3 install awscli \
+    && pip3 install \
     && rm -rf /var/lib/apt/lists/*
+
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+    unzip awscliv2.zip \
+    ./aws/install
 
 # Install necessary packages
 RUN apt-get update && apt-get install -y \

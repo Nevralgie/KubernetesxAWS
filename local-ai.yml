@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: local-ai
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: models-pvc
+  namespace: local-ai
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: gp2  # Make sure to specify the correct StorageClass name
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: local-ai
+  namespace: local-ai
+spec:
+  selector:
+    matchLabels:
+      app: local-ai
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: local-ai
+    spec:
+      containers:
+        - name: local-ai
+          image: quay.io/go-skynet/local-ai:master-ffmpeg-core
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DEBUG
+              value: "true"
+          volumeMounts:
+            - name: models-volume
+              mountPath: /build/models
+      volumes:
+        - name: models-volume
+          persistentVolumeClaim:
+            claimName: models-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-local-ai
+  namespace: local-ai
+spec:
+  selector:
+    app: local-ai
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: local-ai
+  name: ingress-local-ai
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: service-local-ai
+              port:
+                number: 80
