@@ -177,7 +177,7 @@ monitoring:
           tls: []
       EOF
     # - helm uninstall kube-prometheus-stack
-    - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -f values.yaml
+    - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -f values.yml
   tags:
     - build_job_docker
   when: manual
