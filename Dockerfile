@@ -13,7 +13,6 @@ RUN apt-get update && apt-get install -y \
 # Install python for AWS Cli
 RUN apt-get update && apt-get install -y \
     python3-pip \
-    && pip3 install \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -L "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
