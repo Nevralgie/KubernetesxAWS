@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     git \
     tar \
     gzip \
+    unzip \
     curl \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
