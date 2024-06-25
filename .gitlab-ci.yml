@@ -88,7 +88,10 @@ deploy_ai:
     - helm repo add k8sgpt https://charts.k8sgpt.ai/
     - helm repo update
     - helm install release k8sgpt/k8sgpt-operator -n k8sgpt-operator-system --create-namespace || true
-    - kubectl create -f local-ai-test.yml --dry-run=client -o yaml --validate=false | kubectl apply -f -
+    - kubectl create -f deployment.yml --dry-run=client -o yaml | kubectl apply -f -
+    - kubectl create -f service.yml --dry-run=client -o yaml | kubectl apply -f -
+    - kubectl create -f ingress.yml --dry-run=client -o yaml | kubectl apply -f -
+    # - kubectl create -f local-ai-test.yml --dry-run=client -o yaml --validate=false | kubectl apply -f -
     # - kubectl apply -f https://raw.githubusercontent.com/mudler/LocalAI/master/examples/kubernetes/deployment.yaml
     - |
       kubectl apply -f - << EOF

@@ -1,22 +1,31 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: app-container
-  namespace: default
+  name: local-ai-deployment
 spec:
-  replicas: 4
+  replicas: 1
   selector:
     matchLabels:
-      app: demo-app
+      app: local-ai
   template:
     metadata:
       labels:
-        app: demo-app
+        app: local-ai
     spec:
       containers:
-        - name: dum-app-container
-          image: nginx
-          ports:
-            - containerPort: 80  # The port your application is listening on
-      imagePullSecrets:
-        - name: gitlab-cred
+      - name: local-ai
+        image: quay.io/go-skynet/local-ai:latest
+        env:
+        - name: THREADS
+          value: "4"
+        - name: CONTEXT_SIZE
+          value: "512"
+        volumeMounts:
+        - mountPath: /models
+          name: model-volume
+        resources: {}
+      volumes:
+      - name: model-volume
+        hostPath:
+          path: /models
+
