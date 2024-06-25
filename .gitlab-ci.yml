@@ -80,9 +80,6 @@ deploy_ai:
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-    - curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get_helm.sh
-    - chmod 0700 /tmp/get_helm.sh
-    - /tmp/get_helm.sh
     - helm repo add eks https://aws.github.io/eks-charts
     - helm repo update eks
     - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
