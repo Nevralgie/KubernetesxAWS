@@ -20,7 +20,7 @@ stages:
 
 build-docker-image:
   stage: build
-  image: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.2
+  image: docker:24.0.5
   services:
     - docker:dind
   variables:
