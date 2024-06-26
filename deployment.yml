@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: local-ai-deployment
-  namespace: local-ai
+  namespace: k8sgpt-operator-system
 spec:
   replicas: 1
   selector:
