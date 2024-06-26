@@ -101,24 +101,21 @@ deploy_ai:
     # - kubectl create -f local-ai-test.yml --dry-run=client -o yaml --validate=false | kubectl apply -f -
     # - kubectl apply -f https://raw.githubusercontent.com/mudler/LocalAI/master/examples/kubernetes/deployment.yaml 
     - |
-      kubectl -n local-ai apply -f - << EOF
+      kubectl apply -f - << EOF
       apiVersion: core.k8sgpt.ai/v1alpha1
       kind: K8sGPT
       metadata:
-        name: k8sgpt-local
-        namespace: local-ai
+        name: k8sgpt-local-ai
+        namespace: default
       spec:
-        backend: localai  
-        # use the same model name here as the one you plugged
-        # into the LocalAI helm chart's values.yaml
-        model: ggml-gpt4all-j.bin
-        # kubernetes-internal DNS name of the local-ai Service
-        baseUrl: http://local-ai.local-ai.svc.cluster.local:8080/v1
-        # allow K8sGPT to store AI analyses in an in-memory cache,
-        # otherwise your cluster may get throttled :)
+        ai:
+          enabled: true
+          model: ggml-gpt4all-j
+          backend: localai
+          baseUrl: http://local-ai.local-ai.svc.cluster.local:8080/v1
         noCache: false
-        version: v0.2.7
-        enableAI: true
+        repository: ghcr.io/k8sgpt-ai/k8sgpt
+        version: v0.3.8
       EOF
     # - |
     #   kubectl -n local-ai apply -f - << EOF
