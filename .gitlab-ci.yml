@@ -95,7 +95,7 @@ deploy_ai:
     # - helm install local-ai go-skynet/local-ai -f values.yml
     - kubectl create -f namespace.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f pvc.yml --dry-run=client -o yaml | kubectl apply -f -
-    - kubectl create -f storageclass.yml --dry-run=client -o yaml | kubectl apply -f -
+    # - kubectl create -f storageclass.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f deployment.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f service.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f ingress.yml --dry-run=client -o yaml | kubectl apply -f -
