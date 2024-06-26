@@ -99,7 +99,7 @@ deploy_ai:
     # - kubectl create -f storageclass.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f deployment.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f service.yml --dry-run=client -o yaml | kubectl apply -f -
-    - kubectl create -f ingress.yml --dry-run=client -o yaml | kubectl apply -f -
+    # - kubectl create -f ingress.yml --dry-run=client -o yaml | kubectl apply -f -
     # - kubectl create -f local-ai-test.yml --dry-run=client -o yaml --validate=false | kubectl apply -f -
     # - kubectl apply -f https://raw.githubusercontent.com/mudler/LocalAI/master/examples/kubernetes/deployment.yaml 
     - |
