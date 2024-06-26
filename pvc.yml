@@ -8,5 +8,5 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 6Gi
+      storage: 30Gi
   storageClassName: gp2  # Ensure this matches your AWS EBS storage class
