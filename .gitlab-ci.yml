@@ -121,7 +121,7 @@ deploy_ai:
     #     version: v0.2.7
     #     enableAI: true
     #   EOF
-    - kubectl apply -f https://raw.githubusercontent.com/mudler/LocalAI/master/examples/kubernetes/deployment.yaml
+    # nj,- kubectl apply -f https://raw.githubusercontent.com/mudler/LocalAI/master/examples/kubernetes/deployment.yaml
     # - kubectl get results -o json | jq .
   tags:
     - build_job_docker
