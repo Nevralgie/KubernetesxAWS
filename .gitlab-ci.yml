@@ -114,7 +114,7 @@ deploy_ai:
           enabled: true
           model: ggml-gpt4all-j
           backend: localai
-          baseUrl: http://local-ai.local-ai.svc.cluster.local:80/v1
+          baseUrl: http://10.100.177.53:80/v1
         noCache: false
         repository: ghcr.io/k8sgpt-ai/k8sgpt
         version: v0.3.8
