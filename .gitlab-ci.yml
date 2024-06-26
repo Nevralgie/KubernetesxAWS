@@ -1,4 +1,4 @@
-variables:
+zvariables:
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
   EKS_CLUSTER_NAME: "demo-eks-appv2"
   AWS_REGION: "eu-west-3"
@@ -51,7 +51,7 @@ deploy:
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
-    - eksctl create cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --version 1.29 --alb-ingress-access --nodes $NODE_COUNT || true
+    - eksctl create cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --version 1.29 --alb-ingress-access --nodes $NODE_COUNT --node-volume-size=50 || true
     # - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
     # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
     - aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
