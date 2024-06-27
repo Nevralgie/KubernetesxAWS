@@ -13,24 +13,6 @@ spec:
       labels:
         app: local-ai
     spec:
-      containers:
-      - name: local-ai
-        image: quay.io/go-skynet/local-ai:master-ffmpeg-core
-        resources:
-          requests:
-             ephemeral-storage: "10Gi"  # Adjust based on your needs
-        env:
-        - name: THREADS
-          value: "4"
-        - name: CONTEXT_SIZE
-          value: "512"
-        volumeMounts:
-        - mountPath: /models
-          name: model-volume
-      volumes:
-      - name: model-volume
-        persistentVolumeClaim:
-          claimName: model-pvc
       initContainers:
       - name: download-models
         image: busybox
@@ -42,4 +24,21 @@ spec:
         volumeMounts:
         - mountPath: /models
           name: model-volume
-
+      containers:
+      - name: local-ai
+        image: quay.io/go-skynet/local-ai:master-ffmpeg-core
+        env:
+        - name: THREADS
+          value: "4"
+        - name: CONTEXT_SIZE
+          value: "512"
+        volumeMounts:
+        - mountPath: /models
+          name: model-volume
+        resources:
+          requests:
+            ephemeral-storage: "10Gi"  # Adjust based on your needs
+      volumes:
+      - name: model-volume
+        persistentVolumeClaim:
+          claimName: model-pvc
