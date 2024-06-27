@@ -14,8 +14,8 @@ stages:
   - apply
   - deploy
   # - provision
-  - monitor
   - ai
+  - monitor
   - destroy
 
 build-docker-image:
@@ -51,7 +51,7 @@ deploy:
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
-    - eksctl create cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --version 1.29 --alb-ingress-access --nodes $NODE_COUNT --node-volume-size=50 || true
+    - eksctl create cluster -f cluster-config.yml --version 1.29 --alb-ingress-access || true
     # - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
     # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
     - aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
@@ -68,7 +68,6 @@ deploy:
     - kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/examples/2048/2048_full.yaml
   tags:
     - build_job_docker
-  when: manual
 
 deploy_ai:
   stage: ai
@@ -143,7 +142,8 @@ deploy_ai:
     # - kubectl get results -o json | jq .
   tags:
     - build_job_docker
-  when: manual
+  needs:
+    - deploy
 
 monitoring:
   stage: monitor
@@ -202,7 +202,8 @@ monitoring:
     - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom --create-namespace -f values.yaml
   tags:
     - build_job_docker
-  when: manual
+  needs: 
+    - deploy_ai
 
 clean:
   stage: destroy
