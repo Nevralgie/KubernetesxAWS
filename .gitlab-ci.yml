@@ -1,6 +1,6 @@
 variables:
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
-  EKS_CLUSTER_NAME: "demo-eks-appv1"
+  EKS_CLUSTER_NAME: "demo-eks-appv2"
   AWS_REGION: "eu-west-3"
   NODE_COUNT: "3"
   ACCOUNT_ID: "577409777403"
