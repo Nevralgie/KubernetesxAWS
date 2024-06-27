@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: local-ai
-        image: quay.io/go-skynet/local-ai:latest-cpu
+        image: quay.io/go-skynet/local-ai:master-ffmpeg-core
         resources:
           requests:
              ephemeral-storage: "10Gi"  # Adjust based on your needs
@@ -24,6 +24,7 @@ spec:
           value: "4"
         - name: CONTEXT_SIZE
           value: "512"
+        
         volumeMounts:
         - mountPath: /models
           name: model-volume
