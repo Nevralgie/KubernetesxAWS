@@ -167,7 +167,6 @@ monitoring:
     - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
     - helm repo update
     - kubectl create -f namespace.yml --dry-run=client -o yaml | kubectl apply -f -
-    - kubectl config set-context --current --namespace=monitor-graf-prom
     - |
       cat <<EOF > values.yaml
       prometheus:
@@ -200,7 +199,7 @@ monitoring:
           tls: []
       EOF
     # - helm uninstall kube-prometheus-stack
-    - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -f values.yaml
+    - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom --create-namespace -f values.yaml
   tags:
     - build_job_docker
   when: manual
