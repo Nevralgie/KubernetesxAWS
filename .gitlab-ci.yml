@@ -67,6 +67,7 @@ deploy:
     - kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/examples/2048/2048_full.yaml
   tags:
     - build_job_docker
+  when: manual
 
 deploy_ai:
   stage: ai
@@ -112,7 +113,7 @@ deploy_ai:
           enabled: true
           model: ggml-gpt4all-j
           backend: localai
-          baseUrl: http://local-ai.k8sgpt-operator-system.svc.cluster.local:8080/v1
+          baseUrl: http://service-local-ai.k8sgpt-operator-system.svc.cluster.local:8080/v1
         noCache: false
         repository: ghcr.io/k8sgpt-ai/k8sgpt
         version: v0.3.8
@@ -141,8 +142,7 @@ deploy_ai:
     # - kubectl get results -o json | jq .
   tags:
     - build_job_docker
-  needs:
-    - deploy
+  when: manual
 
 monitoring:
   stage: monitor
@@ -201,8 +201,7 @@ monitoring:
     - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom --create-namespace -f values.yaml
   tags:
     - build_job_docker
-  needs: 
-    - deploy_ai
+  when: manual
 
 clean:
   stage: destroy
