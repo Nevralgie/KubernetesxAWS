@@ -130,7 +130,7 @@ deploy_ai:
           annotations: {}
 
           # Optional
-          storageClass: ~
+          storageClass: null
 
         hostPath:
           enabled: false
