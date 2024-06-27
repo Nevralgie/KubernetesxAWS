@@ -93,7 +93,7 @@ deploy_ai:
     - helm install release k8sgpt/k8sgpt-operator -n k8sgpt-operator-system --create-namespace || true
     # - helm repo add go-skynet https://go-skynet.github.io/helm-charts/
     # - helm install local-ai go-skynet/local-ai -f values.yml
-     - kubectl create -f namespace.yml --dry-run=client -o yaml | kubectl apply -f -
+    - kubectl create -f namespace.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f pvc.yml --dry-run=client -o yaml | kubectl apply -f -
     # - kubectl create -f storageclass.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f deployment.yml --dry-run=client -o yaml | kubectl apply -f -
