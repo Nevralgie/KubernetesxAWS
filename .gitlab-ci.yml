@@ -117,11 +117,11 @@ deploy_ai:
       # Prompt templates to include
       # Note: the keys of this map will be the names of the prompt template files
       promptTemplates:
-      default: |
-        The prompt below is a question to answer, a task to complete, or a conversation to respond to; decide which and write an appropriate response.
-        ### Prompt:
-        {{.Input}}
-        ### Response:
+        default: |
+          The prompt below is a question to answer, a task to complete, or a conversation to respond to; decide which and write an appropriate response.
+          ### Prompt:
+          {{.Input}}
+          ### Response:
 
       # Models to download at runtime
       models:
