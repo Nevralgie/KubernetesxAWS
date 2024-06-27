@@ -158,9 +158,9 @@ deploy_ai:
       type: ClusterIP
       port: 80
       targetPort: 8080
-      annotations: {}
+      annotations:
       # If using an AWS load balancer, you'll need to override the default 60s load balancer idle timeout
-      # service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "1200"
+       service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "1200"
 
       ingress:
       enabled: false
