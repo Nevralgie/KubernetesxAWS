@@ -2,7 +2,7 @@ variables:
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
   EKS_CLUSTER_NAME: "demo-eks-k8sgptxlocalai-v1"
   AWS_REGION: "eu-west-3"
-  NODE_COUNT: "3"
+  NODE_COUNT: "2"
   ACCOUNT_ID: "577409777403"
 
 
@@ -50,11 +50,11 @@ deploy:
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
-    - eksctl create cluster -f cluster-config.yml --alb-ingress-access || true
+    - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --nodes $NODE_COUNT --alb-ingress-access || true
     # - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
     # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
-    - aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
-    - eksctl utils associate-iam-oidc-provider --region=$AWS_REGION --cluster=$EKS_CLUSTER_NAME --approve || true
+    - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+    - eksctl utils associate-iam-oidc-provider --cluster=$EKS_CLUSTER_NAME --approve || true
     - aws eks create-access-entry --cluster-name $EKS_CLUSTER_NAME --principal-arn arn:aws:iam::$ACCOUNT_ID:root --type STANDARD --username admin_eks || true
     - aws eks associate-access-policy --cluster-name $EKS_CLUSTER_NAME  --principal-arn arn:aws:iam::$ACCOUNT_ID:root --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy --access-scope type=cluster || true
     - eksctl create iamserviceaccount --cluster=$EKS_CLUSTER_NAME --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::$ACCOUNT_ID:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
@@ -112,7 +112,7 @@ deploy_ai:
           enabled: true
           model: ggml-gpt4all-j
           backend: localai
-          baseUrl: http://10.100.177.53:8080/v1
+          baseUrl: http://local-ai.k8sgpt-operator-system.svc.cluster.local:8080/v1
         noCache: false
         repository: ghcr.io/k8sgpt-ai/k8sgpt
         version: v0.3.8
