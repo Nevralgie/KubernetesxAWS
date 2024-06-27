@@ -149,11 +149,11 @@ deploy_ai:
           path: "/models"
 
       service:
-      type: ClusterIP
-      port: 80
-      targetPort: 8080
-      annotations:
-        {service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "1200"}
+        type: ClusterIP
+        port: 80
+        targetPort: 8080
+        annotations:
+          service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "1200"
       
 
       ingress:
