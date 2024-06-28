@@ -1,6 +1,6 @@
 variables:
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
-  EKS_CLUSTER_NAME: "demo-eks-k8sgptxlocalai-v1"
+  EKS_CLUSTER_NAME: "demo-eks-k8sgptxlocalai-v2"
   AWS_REGION: "eu-west-3"
   NODE_COUNT: "2"
   ACCOUNT_ID: "577409777403"
@@ -50,7 +50,7 @@ deploy:
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
-    - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --node-type c5.xlarge --nodes $NODE_COUNT --alb-ingress-access || true
+    - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --node-type t2.2xlarge --nodes $NODE_COUNT --alb-ingress-access || true
     # - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
     # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
