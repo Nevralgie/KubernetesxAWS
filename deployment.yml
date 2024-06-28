@@ -15,7 +15,7 @@ spec:
     spec:
       initContainers:
       - name: download-models
-        image: busybox
+        image: alpine
         command:
         - /bin/sh
         - -c
