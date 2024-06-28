@@ -111,7 +111,7 @@ deploy_ai:
       spec:
         ai:
           enabled: true
-          model: open-llama-13b-open-instruct.ggmlv3.q3_K_M.bin
+          model: open-llama-13b-open-instruct.ggmlv3.q3_K_M
           backend: localai
           baseUrl: http://service-local-ai.k8sgpt-operator-system.svc.cluster.local:8080/v1
         noCache: false
