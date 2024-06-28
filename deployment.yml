@@ -21,6 +21,7 @@ spec:
         - -c
         - |
           wget -P /models https://gpt4all.io/models/ggml-gpt4all-j.bin
+          # Add more wget commands if you have more models to download
         volumeMounts:
         - mountPath: /models
           name: model-volume
@@ -32,12 +33,16 @@ spec:
           value: "4"
         - name: CONTEXT_SIZE
           value: "512"
+        - name: MODELS_PATH
+          value: "/models"
+        - name: PRELOAD_MODELS
+          value: '["/models/ggml-gpt4all-j.bin"]'  # Ensure the path and name match the downloaded model
         volumeMounts:
         - mountPath: /models
           name: model-volume
         resources:
           requests:
-            ephemeral-storage: "10Gi"  # Adjust based on your needs
+            ephemeral-storage: "10Gi"
       volumes:
       - name: model-volume
         persistentVolumeClaim:
