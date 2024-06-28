@@ -20,6 +20,7 @@ spec:
         - /bin/sh
         - -c
         - >
+          apk add --no-cache curl &&
           if [ ! -f /models/ggml-gpt4all-j.bin ]; then
             curl -o /models/ggml-gpt4all-j.bin https://gpt4all.io/models/ggml-gpt4all-j.bin;
           else
