@@ -21,7 +21,6 @@ spec:
         - -c
         - |
           wget -P /models https://gpt4all.io/models/ggml-gpt4all-j.bin
-          # Add more wget commands if you have more models to download
         volumeMounts:
         - mountPath: /models
           name: model-volume
@@ -33,16 +32,22 @@ spec:
           value: "4"
         - name: CONTEXT_SIZE
           value: "512"
+        - name: GALLERIES
+          value: '[{"name":"model-gallery", "url":"github:go-skynet/model-gallery/index.yaml"}, {"url": "github:go-skynet/model-gallery/huggingface.yaml","name":"huggingface"}]'
+        - name: PRELOAD_MODELS
+          value: '[{ "id": "huggingface@thebloke__open-llama-13b-open-instruct-ggml__open-llama-13b-open-instruct.ggmlv3.q3_k_m.bin", "name": "gpt-3.5-turbo", "overrides": { "f16": true, "mmap": true }}]'
         - name: MODELS_PATH
           value: "/models"
-        - name: PRELOAD_MODELS
-          value: '["/models/ggml-gpt4all-j.bin"]'  # Ensure the path and name match the downloaded model
         volumeMounts:
         - mountPath: /models
           name: model-volume
         resources:
           requests:
-            ephemeral-storage: "10Gi"
+            memory: "2Gi"
+            cpu: "2"
+          limits:
+            memory: "4Gi"
+            cpu: "4"
       volumes:
       - name: model-volume
         persistentVolumeClaim:
