@@ -1,6 +1,6 @@
 variables:
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
-  EKS_CLUSTER_NAME: "demo-eks-k8sgptxlocalai-v2"
+  EKS_CLUSTER_NAME: "demo-eks-k8sgptxlocalai-v1"
   AWS_REGION: "eu-west-3"
   NODE_COUNT: "2"
   ACCOUNT_ID: "577409777403"
