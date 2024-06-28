@@ -101,23 +101,23 @@ deploy_ai:
     # - kubectl create -f ingress.yml --dry-run=client -o yaml | kubectl apply -f -
     # - kubectl create -f local-ai-test.yml --dry-run=client -o yaml --validate=false | kubectl apply -f -
     # - kubectl apply -f https://raw.githubusercontent.com/mudler/LocalAI/master/examples/kubernetes/deployment.yaml 
-    # - |
-    #   kubectl apply -f - << EOF
-    #   apiVersion: core.k8sgpt.ai/v1alpha1
-    #   kind: K8sGPT
-    #   metadata:
-    #     name: k8sgpt-local-ai
-    #     namespace: k8sgpt-operator-system
-    #   spec:
-    #     ai:
-    #       enabled: true
-    #       model: ggml-gpt4all-j
-    #       backend: localai
-    #       baseUrl: http://service-local-ai.k8sgpt-operator-system.svc.cluster.local:8080/v1
-    #     noCache: false
-    #     repository: ghcr.io/k8sgpt-ai/k8sgpt
-    #     version: v0.3.8
-    #   EOF
+    - |
+      kubectl apply -f - << EOF
+      apiVersion: core.k8sgpt.ai/v1alpha1
+      kind: K8sGPT
+      metadata:
+        name: k8sgpt-local-ai
+        namespace: k8sgpt-operator-system
+      spec:
+        ai:
+          enabled: true
+          model: open-llama-13b-open-instruct.ggmlv3.q3_K_M.bin
+          backend: localai
+          baseUrl: http://service-local-ai.k8sgpt-operator-system.svc.cluster.local:8080/v1
+        noCache: false
+        repository: ghcr.io/k8sgpt-ai/k8sgpt
+        version: v0.3.8
+      EOF
     # - |
     #   kubectl -n local-ai apply -f - << EOF
     #   apiVersion: core.k8sgpt.ai/v1alpha1
