@@ -161,7 +161,7 @@ monitoring:
   tags:
     - build_job_docker
   needs:
-    - deploy
+    - deploy_ai
 
 clean:
   stage: destroy
