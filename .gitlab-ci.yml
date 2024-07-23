@@ -3,17 +3,12 @@ variables:
   EKS_CLUSTER_NAME: "demo-eks-k8sgptxlocalai-v1"
   AWS_REGION: "eu-west-3"
   NODE_COUNT: "2"
-  ACCOUNT_ID: "577409777403"
+  ACCOUNT_ID: "$AWS_ACCOUNT_ID"
 
 
 stages:
   - build
-  - prepare
-  - validate
-  # - plan
-  - apply
   - deploy
-  # - provision
   - ai
   - monitor
   - destroy
@@ -29,7 +24,6 @@ build-docker-image:
   before_script:
     - echo "$PULL_PAT_TOKEN" | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin # Connection au registry gitlab
   script:
-    - echo "Yé boiiiiii"
     - docker build -t $CI_REGISTRY/nevii/terraform_eks/awsclitoolbox:v0.2 .
     - docker push $CI_REGISTRY/nevii/terraform_eks/awsclitoolbox:v0.2
   artifacts:
@@ -58,16 +52,14 @@ deploy:
     - aws eks create-access-entry --cluster-name $EKS_CLUSTER_NAME --principal-arn arn:aws:iam::$ACCOUNT_ID:root --type STANDARD --username admin_eks || true
     - aws eks associate-access-policy --cluster-name $EKS_CLUSTER_NAME  --principal-arn arn:aws:iam::$ACCOUNT_ID:root --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy --access-scope type=cluster || true
     - eksctl create iamserviceaccount --cluster=$EKS_CLUSTER_NAME --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::$ACCOUNT_ID:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
-    # - aws eks describe-addon --cluster-name $EKS_CLUSTER_NAME --addon-name vpc-cni --query addon.addonVersion --output text
     - eksctl create addon --cluster $EKS_CLUSTER_NAME --name vpc-cni --version latest --force # Necessary for aws load balancer controller
     - eksctl create addon --name aws-ebs-csi-driver --cluster $EKS_CLUSTER_NAME --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy --force # --service-account-role-arn arn:aws:organizations::577409777403:account/o-leoggup8v8/577409777403
     - helm repo add eks https://aws.github.io/eks-charts
     - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller
-    - sleep 30 # aws-load-balancer-webhook-service needs time to be up and running, or else next line will fail
+    - sleep 15 # aws-load-balancer-webhook-service needs time to be up and running, or else next line will fail
     - kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/examples/2048/2048_full.yaml
   tags:
     - build_job_docker
-  when: manual
 
 deploy_ai:
   stage: ai
@@ -91,16 +83,11 @@ deploy_ai:
     - kubectl delete crd k8sgpts.core.k8sgpt.ai || true
     - helm uninstall release --namespace k8sgpt-operator-system || true
     - helm install release k8sgpt/k8sgpt-operator -n k8sgpt-operator-system --create-namespace || true
-    # - helm repo add go-skynet https://go-skynet.github.io/helm-charts/
-    # - helm install local-ai go-skynet/local-ai -f values.yml
     - kubectl create -f namespace.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f pvc.yml --dry-run=client -o yaml | kubectl apply -f -
     # - kubectl create -f storageclass.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f deployment.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f service.yml --dry-run=client -o yaml | kubectl apply -f -
-    # - kubectl create -f ingress.yml --dry-run=client -o yaml | kubectl apply -f -
-    # - kubectl create -f local-ai-test.yml --dry-run=client -o yaml --validate=false | kubectl apply -f -
-    # - kubectl apply -f https://raw.githubusercontent.com/mudler/LocalAI/master/examples/kubernetes/deployment.yaml 
     - |
       kubectl apply -f - << EOF
       apiVersion: core.k8sgpt.ai/v1alpha1
@@ -118,49 +105,22 @@ deploy_ai:
         repository: ghcr.io/k8sgpt-ai/k8sgpt
         version: v0.3.8
       EOF
-    # - |
-    #   kubectl -n local-ai apply -f - << EOF
-    #   apiVersion: core.k8sgpt.ai/v1alpha1
-    #   kind: K8sGPT
-    #   metadata:
-    #     name: k8sgpt-local
-    #     namespace: local-ai
-    #   spec:
-    #     backend: localai  
-    #     # use the same model name here as the one you plugged
-    #     # into the LocalAI helm chart's values.yaml
-    #     model: ggml-gpt4all-j.bin
-    #     # kubernetes-internal DNS name of the local-ai Service
-    #     baseUrl: http://local-ai.local-ai.svc.cluster.local:8080/v1
-    #     # allow K8sGPT to store AI analyses in an in-memory cache,
-    #     # otherwise your cluster may get throttled :)
-    #     noCache: false
-    #     version: v0.2.7
-    #     enableAI: true
-    #   EOF
-    # nj,- kubectl apply -f https://raw.githubusercontent.com/mudler/LocalAI/master/examples/kubernetes/deployment.yaml
-    # - kubectl get results -o json | jq .
   tags:
     - build_job_docker
-  when: manual
+  needs:
+    - deploy
 
 monitoring:
   stage: monitor
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.2
   script:
-    # - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-    # - chmod +x ./kubectl
-    # - mv ./kubectl /usr/local/bin/kubectl
     - echo $EKS_CLUSTER_NAME
     - echo $AWS_REGION
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-    # - curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get_helm.sh
-    # - chmod 0700 /tmp/get_helm.sh
-    # - /tmp/get_helm.sh
     - helm repo add eks https://aws.github.io/eks-charts
     - helm repo update eks
     - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
@@ -197,34 +157,23 @@ monitoring:
                     number: 80
           tls: []
       EOF
-    # - helm uninstall kube-prometheus-stack
     - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom --create-namespace -f values.yaml
   tags:
     - build_job_docker
-  when: manual
+  needs:
+    - deploy
 
 clean:
   stage: destroy
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.2
-  environment:
-    name: production
-  before_script:
-      - sleep 5
-    # - yum install -y openssl git tar gzip build-essential # needed for Helm chart verification
   script:
-    # - curl -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get_helm.sh
-    # - chmod 0700 /tmp/get_helm.sh
-    # - /tmp/get_helm.sh # Install Helm
     - echo $EKS_CLUSTER_NAME
     - echo $AWS_REGION
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME  # $EKS_CLUSTER_NAME demo-eks-appv1
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
-    # - kubectl delete -f 2048_full.yaml
-    # - eksctl delete fargateprofile --cluster $EKS_CLUSTER_NAME --name <fargate-profile-name>
-    # - eksctl delete nodegroup --cluster $EKS_CLUSTER_NAME --name <node-group-name>
     - eksctl delete cluster --name $EKS_CLUSTER_NAME
   tags:
     - build_job_docker
