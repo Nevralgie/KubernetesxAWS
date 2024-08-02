@@ -210,6 +210,9 @@ destroy:
   stage: destroy_infra
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
+  before_script:
+    - terraform init
+    - VPC_ID=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.resourcesVpcConfig.vpcId" --output text)
   script:
     - terraform destroy --auto-approve
   when: manual
