@@ -69,10 +69,10 @@ resource "aws_db_instance" "rds_mysql" {
   identifier           = "devopsdb-app"
   engine               = "mysql"
   engine_version       = "8.0"
-  instance_class       = db.t3.large
+  instance_class       = "db.t3.large"
   username             = "admin"
   password             = "vAdmintestv"
-  db_subnet_group_name = aws_db_subnet_group.default.name
+  db_subnet_group_name = aws_db_subnet_group.rds_subnet_group.name
   multi_az             = false
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
   skip_final_snapshot  = false
