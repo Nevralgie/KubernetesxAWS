@@ -208,8 +208,10 @@ clean:
 
 destroy:
   stage: destroy_infra
+  image:
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   script:
     - terraform destroy --auto-approve
-  dependencies:
-    - apply
   when: manual
+  tags:
+    - build_job_docker
