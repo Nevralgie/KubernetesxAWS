@@ -9,6 +9,7 @@ variables:
 stages:
   - build
   - deploy
+  - deploy-managed-mysql-database
   - ai
   - monitor
   - destroy
@@ -37,34 +38,52 @@ build-docker-image:
 deploy:
   stage: deploy
   image:
-    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.2
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   environment:
     name: production
   script:
-    # - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-    # - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-    # - aws configure set region $AWS_REGION
-    # - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --node-type t2.2xlarge --nodes $NODE_COUNT --alb-ingress-access --node-private-networking --vpc-nat-mode Single || true
+    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+    - aws configure set region $AWS_REGION
+    - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --node-type t2.2xlarge --nodes $NODE_COUNT --alb-ingress-access --node-private-networking --vpc-nat-mode Single || true
     # # - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
     # # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-    # - eksctl utils associate-iam-oidc-provider --cluster=$EKS_CLUSTER_NAME --approve || true
-    # - aws eks create-access-entry --cluster-name $EKS_CLUSTER_NAME --principal-arn arn:aws:iam::$ACCOUNT_ID:root --type STANDARD --username admin_eks || true
-    # - aws eks associate-access-policy --cluster-name $EKS_CLUSTER_NAME  --principal-arn arn:aws:iam::$ACCOUNT_ID:root --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy --access-scope type=cluster || true
-    # - eksctl create iamserviceaccount --cluster=$EKS_CLUSTER_NAME --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::$ACCOUNT_ID:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
-    # - eksctl create addon --cluster $EKS_CLUSTER_NAME --name vpc-cni --version latest --force # Necessary for aws load balancer controller
-    # - eksctl create addon --name aws-ebs-csi-driver --cluster $EKS_CLUSTER_NAME --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy --force # --service-account-role-arn arn:aws:organizations::577409777403:account/o-leoggup8v8/577409777403
-    # - helm repo add eks https://aws.github.io/eks-charts
-    # - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller || true
-    # - sleep 15 # aws-load-balancer-webhook-service needs time to be up and running, or else next line will fail
+    - eksctl utils associate-iam-oidc-provider --cluster=$EKS_CLUSTER_NAME --approve || true
+    - aws eks create-access-entry --cluster-name $EKS_CLUSTER_NAME --principal-arn arn:aws:iam::$ACCOUNT_ID:root --type STANDARD --username admin_eks || true
+    - aws eks associate-access-policy --cluster-name $EKS_CLUSTER_NAME  --principal-arn arn:aws:iam::$ACCOUNT_ID:root --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy --access-scope type=cluster || true
+    - eksctl create iamserviceaccount --cluster=$EKS_CLUSTER_NAME --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::$ACCOUNT_ID:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
+    - eksctl create addon --cluster $EKS_CLUSTER_NAME --name vpc-cni --version latest --force # Necessary for aws load balancer controller
+    - eksctl create addon --name aws-ebs-csi-driver --cluster $EKS_CLUSTER_NAME --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy --force # --service-account-role-arn arn:aws:organizations::577409777403:account/o-leoggup8v8/577409777403
+    - helm repo add eks https://aws.github.io/eks-charts
+    - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller || true
+    - sleep 30 # aws-load-balancer-webhook-service needs time to be up and running, or else next line will fail
     - kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/examples/2048/2048_full.yaml
   tags:
     - build_job_docker
 
+deploy:
+  stage: deploy-managed-mysql-database
+  image:
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
+    entrypoint:
+      - '/usr/bin/env'
+      - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+  before_script:
+    - rm -rf .terraform
+    - terraform --version
+    - terraform init
+    - VPC_ID=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.resourcesVpcConfig.vpcId" --output text)
+  script:
+    - terraform fmt -recursive
+    - terraform validate
+    - terraform plan -var vpc_id=$VPC_ID
+    - terraform apply -var vpc_id=$VPC_ID --auto-approve
+
 deploy_ai:
   stage: ai
   image:
-    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.2
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   script:
     - echo $EKS_CLUSTER_NAME
     - echo $AWS_REGION
@@ -113,7 +132,7 @@ deploy_ai:
 monitoring:
   stage: monitor
   image:
-    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.2
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   script:
     - echo $EKS_CLUSTER_NAME
     - echo $AWS_REGION
@@ -166,7 +185,7 @@ monitoring:
 clean:
   stage: destroy
   image:
-    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.2
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   script:
     - echo $EKS_CLUSTER_NAME
     - echo $AWS_REGION
