@@ -30,10 +30,6 @@ data "aws_vpc" "eks_vpc" {
   id = var.vpc_id
 }
 
-data "aws_subnet_ids" "eks_subnets" {
-  vpc_id = data.aws_vpc.eks_vpc.id
-}
-
 # Create additional private subnets
 resource "aws_subnet" "private_subnet_1" {
   vpc_id                  = data.aws_vpc.eks_vpc.id
@@ -97,7 +93,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_mysql" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_out" {
-  security_group_id = aws_security_group.rds_security_group.id
+  security_group_id = aws_security_group.rds_sg.id
   cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "-1" # semantically equivalent to all ports
 }

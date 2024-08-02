@@ -13,6 +13,7 @@ stages:
   - ai
   - monitor
   - destroy
+  - destroy_infra
 
 build-docker-image:
   stage: build
@@ -203,4 +204,12 @@ clean:
     - eksctl delete cluster --name $EKS_CLUSTER_NAME
   tags:
     - build_job_docker
+  when: manual
+
+destroy:
+  stage: destroy_infra
+  script:
+    - terraform destroy --auto-approve
+  dependencies:
+    - apply
   when: manual
