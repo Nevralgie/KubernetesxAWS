@@ -62,7 +62,7 @@ deploy:
   tags:
     - build_job_docker
 
-deploy:
+deploy_db:
   stage: deploy-managed-mysql-database
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
