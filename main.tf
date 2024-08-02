@@ -34,7 +34,7 @@ data "aws_vpc" "eks_vpc" {
 resource "aws_subnet" "private_subnet_1" {
   vpc_id                  = data.aws_vpc.eks_vpc.id
   cidr_block              = "192.168.192.0/19"
-  availability_zone       = "eu-west-a"
+  availability_zone       = "eu-west-3a"
   map_public_ip_on_launch = false
   tags = {
     Name = "rds_private-subnet-1"
