@@ -76,10 +76,11 @@ deploy_db:
     - terraform init
     - VPC_ID=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.resourcesVpcConfig.vpcId" --output text)
   script:
+    - echo $VPC_ID
     - terraform fmt -recursive
     - terraform validate
-    - terraform plan -var vpc_id=$VPC_ID
-    - terraform apply -var vpc_id=$VPC_ID --auto-approve
+    - terraform plan -var "vpc_id=$VPC_ID"
+    - terraform apply -var "vpc_id=$VPC_ID" --auto-approve
   # needs:
   #   - deploy
   when: manual
