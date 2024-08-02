@@ -214,7 +214,7 @@ destroy:
     - terraform init
     - VPC_ID=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.resourcesVpcConfig.vpcId" --output text)
   script:
-    - terraform destroy --auto-approve
+    - terraform destroy -var "vpc_id=$VPC_ID" --auto-approve
   when: manual
   tags:
     - build_job_docker
