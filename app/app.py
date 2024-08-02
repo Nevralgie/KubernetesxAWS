@@ -16,7 +16,7 @@ app = Flask(__name__, static_folder=STATIC_DIR)
 img = io.BytesIO()
 
 # Define the stock names
-stock_names = ['AAPL', 'GOOGL', 'MSFT']  # Replace with your desired stock symbols
+stock_names = ['AMZN', 'MSFT']  # Replace with your desired stock symbols
 
 # Perform stock market analysis for each stock name
 stock_data = {}

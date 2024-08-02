@@ -92,6 +92,14 @@ resource "aws_vpc_security_group_ingress_rule" "allow_mysql" {
   to_port           = 3306
 }
 
+resource "aws_vpc_security_group_ingress_rule" "allow_mysql" {
+  security_group_id = aws_security_group.rds_sg.id
+  referenced_security_group_id = "sg-0c46242ac67ff1258"
+  from_port         = 3306
+  ip_protocol       = "tcp"
+  to_port           = 3306
+}
+
 resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_out" {
   security_group_id = aws_security_group.rds_sg.id
   cidr_ipv4         = "0.0.0.0/0"
