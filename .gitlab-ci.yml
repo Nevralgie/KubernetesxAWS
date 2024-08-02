@@ -79,6 +79,8 @@ deploy:
     - terraform validate
     - terraform plan -var vpc_id=$VPC_ID
     - terraform apply -var vpc_id=$VPC_ID --auto-approve
+  needs:
+    - deploy
 
 deploy_ai:
   stage: ai
