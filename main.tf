@@ -33,7 +33,7 @@ data "aws_vpc" "eks_vpc" {
 # Create additional private subnets
 resource "aws_subnet" "private_subnet_1" {
   vpc_id                  = data.aws_vpc.eks_vpc.id
-  cidr_block              = "192.168.1.0/24"
+  cidr_block              = "192.168.192.0/19"
   availability_zone       = "eu-west-a"
   map_public_ip_on_launch = false
   tags = {
@@ -43,7 +43,7 @@ resource "aws_subnet" "private_subnet_1" {
 
 resource "aws_subnet" "private_subnet_2" {
   vpc_id                  = data.aws_vpc.eks_vpc.id
-  cidr_block              = "192.168.1.0/24"
+  cidr_block              = "192.168.224.0/19"
   availability_zone       = "eu-west-3b"
   map_public_ip_on_launch = false
   tags = {
