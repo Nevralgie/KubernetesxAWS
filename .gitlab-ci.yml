@@ -44,13 +44,13 @@ deploy:
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
-    - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --node-type t2.2xlarge --nodes $NODE_COUNT --alb-ingress-access || true
+    # - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --node-type t2.2xlarge --nodes $NODE_COUNT --alb-ingress-access || true
     # - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
     # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
     - eksctl utils associate-iam-oidc-provider --cluster=$EKS_CLUSTER_NAME --approve || true
-    - aws eks create-access-entry --cluster-name $EKS_CLUSTER_NAME --principal-arn arn:aws:iam::$ACCOUNT_ID:root --type STANDARD --username admin_eks || true
-    - aws eks associate-access-policy --cluster-name $EKS_CLUSTER_NAME  --principal-arn arn:aws:iam::$ACCOUNT_ID:root --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy --access-scope type=cluster || true
+    - aws eks create-access-entry --cluster-name $EKS_CLUSTER_NAME --principal-arn arn:aws:iam::$ACCOUNT_ID:root/root --type STANDARD --username admin_eks || true
+    - aws eks associate-access-policy --cluster-name $EKS_CLUSTER_NAME  --principal-arn arn:aws:iam::$ACCOUNT_ID:root/root --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy --access-scope type=cluster || true
     - eksctl create iamserviceaccount --cluster=$EKS_CLUSTER_NAME --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::$ACCOUNT_ID:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
     - eksctl create addon --cluster $EKS_CLUSTER_NAME --name vpc-cni --version latest --force # Necessary for aws load balancer controller
     - eksctl create addon --name aws-ebs-csi-driver --cluster $EKS_CLUSTER_NAME --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy --force # --service-account-role-arn arn:aws:organizations::577409777403:account/o-leoggup8v8/577409777403
