@@ -107,8 +107,8 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_out" {
 }
 
 
-output "rds_endpoint" {
-  value = aws_db_instance.rds_mysql.endpoint
+output "rds_address" {
+  value = aws_db_instance.rds_mysql.address
 }
 
 output "database_username" {
