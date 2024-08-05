@@ -77,6 +77,8 @@ deploy_db:
       - '/usr/bin/env'
       - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
   before_script:
+    - wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
+    - chmod +x /usr/local/bin/yq
     - rm -rf .terraform
     - terraform --version
     - terraform init
@@ -87,15 +89,16 @@ deploy_db:
     - terraform validate
     - terraform plan -var "vpc_id=$VPC_ID"
     - terraform apply -var "vpc_id=$VPC_ID" --auto-approve
-    - DB_ENDPOINT=$(terraform output -raw rds_address)
-    - DB_USER=$(terraform output -raw database_username)
-    - DB_PASSWORD=$(terraform output -raw database_password)
-    - DB_NAME=$(terraform output -raw database_name)
-    - echo "DB_ENDPOINT=$DB_ENDPOINT" > vars.env
-    - echo "DB_USER=$DB_USER" >> vars.env
-    - echo "DB_PASSWORD=$DB_PASSWORD" >> vars.env
-    - echo "DB_NAME=$DB_NAME" >> vars.env
-    - cat vars.env
+    - terraform output -json | yq eval -P '.' > vars.yml
+    # - DB_ENDPOINT=$(terraform output -raw rds_address)
+    # - DB_USER=$(terraform output -raw database_username)
+    # - DB_PASSWORD=$(terraform output -raw database_password)
+    # - DB_NAME=$(terraform output -raw database_name)
+    # - echo "DB_ENDPOINT=$DB_ENDPOINT" > vars.env
+    # - echo "DB_USER=$DB_USER" >> vars.env
+    # - echo "DB_PASSWORD=$DB_PASSWORD" >> vars.env
+    # - echo "DB_NAME=$DB_NAME" >> vars.env
+    - cat vars.yml
   # needs:
   #   - deploy
   when: manual
