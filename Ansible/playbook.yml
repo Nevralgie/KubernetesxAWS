@@ -7,7 +7,7 @@
     db_name: "{{ lookup('env', 'DB_NAME') }}"
     db_user: "{{ lookup('env', 'DB_USER') }}"
     db_password: "{{ lookup('env', 'DB_PASSWORD') }}"
-    db_port: "{{ default(3306) }}"  # Default MySQL port                                
+                               
 
   tasks:
 
@@ -18,14 +18,14 @@
         login_user: "{{ db_user }}"
         login_password: "{{ db_password  }}"
         login_host: "{{ db_host }}"
-        login_port: "{{ db_port }}"
+        login_port: "3306"
 
     - name: Create a table and insert initial data
       mysql_query:
         login_user: "{{ db_user }}"
         login_password: "{{ db_password }}"
         login_host: "{{ db_host }}"
-        login_port: "{{ db_port }}"
+        login_port: "{{ 3306}}"
         db: "{{ db_name }}"
         query: |
           CREATE DATABASE devdb;
