@@ -1,7 +1,7 @@
 - name: Hydrate MySQL Database
   hosts: localhost
   connection: local #Bypass SSH key check
-  become: yes
+  # become: yes
   vars:
     db_host: "{{ lookup('env', 'DB_ENDPOINT') }}"
     db_name: "{{ lookup('env', 'DB_NAME') }}"
