@@ -255,8 +255,9 @@ destroy:
   before_script:
     - terraform init
     - VPC_ID=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.resourcesVpcConfig.vpcId" --output text)
+    - RTB_ID=$(aws ec2 describe-route-tables --region $AWS_REGION --filters "Name=vpc-id,Values=$VPC_ID" --query "RouteTables[0].RouteTableId" --output text)
   script:
-    - terraform destroy -var "vpc_id=$VPC_ID" --auto-approve
+    - terraform destroy -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" --auto-approve
   when: manual
   tags:
     - build_job_docker
