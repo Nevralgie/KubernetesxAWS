@@ -95,6 +95,7 @@ deploy_db:
     - echo "DB_USER=$DB_USERNAME" >> vars.env
     - echo "DB_PASSWORD=$DB_PASSWORD" >> vars.env
     - echo "DB_NAME=$DB_NAME" >> vars.env
+    - cat vars.env
   # needs:
   #   - deploy
   when: manual
