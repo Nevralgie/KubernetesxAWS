@@ -122,7 +122,7 @@ hydrate_db:
     - ansible -m ping all
     - ansible-inventory --list
     - ansible-inventory --graph
-    - ansible-playbook -i Ansible/inventory.ini Ansible/playbook.yml -e "@vars.env" # -e key_path=.docker/config.json -e "@vars.env" -e "node_config_file=config.yaml"
+    - ansible-playbook -i Ansible/inventory.ini Ansible/playbook.yml -e "@vars.yml" # -e key_path=.docker/config.json -e "@vars.env" -e "node_config_file=config.yaml"
   needs:
     - job: deploy_db
       artifacts: true
