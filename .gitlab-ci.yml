@@ -83,12 +83,13 @@ deploy_db:
     - terraform --version
     - terraform init
     - VPC_ID=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.resourcesVpcConfig.vpcId" --output text)
+    - RTB_ID=$(aws ec2 describe-route-tables --filters "Name=vpc-id,Values=$VPC_ID" --query "RouteTables[0].RouteTableId" --output text)
   script:
     - echo $VPC_ID
     - terraform fmt -recursive
     - terraform validate
-    - terraform plan -var "vpc_id=$VPC_ID"
-    - terraform apply -var "vpc_id=$VPC_ID" --auto-approve
+    - terraform plan -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" 
+    - terraform apply -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" --auto-approve
     - terraform output -json | yq eval -P '.' > vars.yml
     # - DB_ENDPOINT=$(terraform output -raw rds_address)
     # - DB_USER=$(terraform output -raw database_username)

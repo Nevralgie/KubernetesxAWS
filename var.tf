@@ -3,3 +3,7 @@ variable "vpc_id" {
   type = string
 }
 
+variable "rtb_id" {
+  description = "EKS VPC ROUTE TABLE"
+  type = string
+}
