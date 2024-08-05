@@ -92,7 +92,7 @@ deploy_db:
     - DB_PASSWORD=$(terraform output -raw database_password)
     - DB_NAME=$(terraform output -raw database_name)
     - echo "DB_ENDPOINT=$DB_ENDPOINT" > vars.env
-    - echo "DB_USER=$DB_USER" >> vars.env
+    - echo "DB_USER=$DB_USERNAME" >> vars.env
     - echo "DB_PASSWORD=$DB_PASSWORD" >> vars.env
     - echo "DB_NAME=$DB_NAME" >> vars.env
   # needs:
