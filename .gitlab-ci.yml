@@ -104,7 +104,7 @@ deploy_db:
   when: manual
   artifacts:
     paths:
-      - vars.env
+      - vars.yml
   
 hydrate_db:
   stage: provision
