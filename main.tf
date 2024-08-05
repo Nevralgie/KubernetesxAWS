@@ -158,7 +158,7 @@ resource "aws_route" "main_vpc_route_to_k8s" {
 
 # Create a route for the first VPC's CIDR block in the second VPC's route table
 resource "aws_route" "vpc2_route" {
-  route_table_id            = data.aws_vpc.target_peering_vpc.id.main_route_table_id
+  route_table_id            = var.rtb_id
   destination_cidr_block    = "172.31.0.0/16"
   vpc_peering_connection_id = aws_vpc_peering_connection.vpc_gitlab_runner.id
 }
