@@ -94,7 +94,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_mysql" {
 
 resource "aws_vpc_security_group_ingress_rule" "allow_mysql_gitlabrunner" {
   security_group_id = aws_security_group.rds_sg.id
-  referenced_security_group_id = "sg-0c46242ac67ff1258"
+  cidr_ipv4         = "13.36.208.54/32"
   from_port         = 3306
   ip_protocol       = "tcp"
   to_port           = 3306
