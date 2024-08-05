@@ -1,36 +1,23 @@
 - name: Hydrate MySQL Database
   hosts: localhost
+  connection: local #Bypass SSH key check
   become: yes
   vars:
-  #   db_host: "{{ lookup('env', 'DB_ENDPOINT') }}"   # Replace with your RDS endpoint
-  #   db_name: "{{ lookup('env', 'DB_NAME') }}"   # Replace with your database name
-  #   db_user: "{{ lookup('env', 'DB_USER') }}"   # Replace with your database username
-  #   db_password: "{{ lookup('env', 'DB_PASSWORD') }}"  # Replace with your database password
+    db_host: "{{ lookup('env', 'DB_ENDPOINT') }}"
+    db_name: "{{ lookup('env', 'DB_NAME') }}"
+    db_user: "{{ lookup('env', 'DB_USER') }}"
+    db_password: "{{ lookup('env', 'DB_PASSWORD') }}"
     db_port: "{{ default(3306) }}"  # Default MySQL port                                
 
   tasks:
-    - name: Load environment variables from .env file
-      shell: cat {{ env_file }}
-      register: env_file_content
-
-    - name: Parse the environment variables
-      set_fact:
-        env_vars: "{{ env_file_content.stdout | from_yaml }}"
-
-    - name: Set environment variables
-      set_fact:
-        DB_ENDPOINT: "{{ env_vars.DB_ENDPOINT }}"
-        DB_USER: "{{ env_vars.DB_USER }}"
-        DB_PASSWORD: "{{ env_vars.DB_PASSWORD }}"
-        DB_NAME: "{{ env_vars.DB_NAME }}"
 
     - name: Ensure the database exists
       mysql_db:
-        name: "{{ DB_NAME }}"
+        name: "{{ db_name }}"
         state: present
-        login_user: "{{ DB_USER }}"
-        login_password: "{{ DB_PASSWORD }}"
-        login_host: "{{ DB_ENDPOINT }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password  }}"
+        login_host: "{{ db_host }}"
         login_port: "{{ db_port }}"
 
     - name: Create a table and insert initial data
