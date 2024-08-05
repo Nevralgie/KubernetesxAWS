@@ -1,5 +1,5 @@
 - name: Hydrate MySQL Database
-  hosts: local
+  hosts: localhost
   become: yes
   vars:
   #   db_host: "{{ lookup('env', 'DB_ENDPOINT') }}"   # Replace with your RDS endpoint
