@@ -2,11 +2,11 @@
   hosts: local
   become: yes
   vars:
-    db_host: your-db-endpoint.rds.amazonaws.com  # Replace with your RDS endpoint
-    db_name: db_app                 # Replace with your database name
-    db_user: admin                   # Replace with your database username
-    db_password: vAdmintestv                # Replace with your database password
-    db_port: 3306                                # Default MySQL port
+    db_host: "{{ lookup('env', 'DB_ENDPOINT') }}"   # Replace with your RDS endpoint
+    db_name: "{{ lookup('env', 'DB_NAME') }}"   # Replace with your database name
+    db_user: "{{ lookup('env', 'DB_USER') }}"   # Replace with your database username
+    db_password: "{{ lookup('env', 'DB_PASSWORD') }}"  # Replace with your database password
+    db_port: "{{ lookup('env', 'DB_PORT') | default(3306) }}"  # Default MySQL port                                # Default MySQL port
 
   tasks:
     - name: Ensure the database exists

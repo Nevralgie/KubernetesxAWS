@@ -10,6 +10,7 @@ stages:
   - build
   - deploy
   - deploy-managed-mysql-database
+  - provision
   - ai
   - monitor
   - destroy
@@ -86,9 +87,41 @@ deploy_db:
     - terraform validate
     - terraform plan -var "vpc_id=$VPC_ID"
     - terraform apply -var "vpc_id=$VPC_ID" --auto-approve
+    - DB_ENDPOINT=$(terraform output -raw rds_endpoint)
+    - DB_USERNAME=$(terraform output -raw database_username)
+    - DB_PASSWORD=$(terraform output -raw database_password)
+    - DB_NAME=$(terraform output -raw database_name)
+    - echo "DB_ENDPOINT=$DB_ENDPOINT" > vars.env
+    - echo "DB_USER=$DB_USER" >> vars.env
+    - echo "DB_PASSWORD=$DB_PASSWORD" >> vars.env
+    - echo "DB_NAME=$DB_NAME" >> vars.env
   # needs:
   #   - deploy
   when: manual
+  artifacts:
+    paths:
+      - vars.env
+  
+hydrate_db:
+stage: provision
+# image: python:3.9.17-slim-bullseye
+before_script:
+  - export AWS_PROFILE=aws_profile
+  - export AWS_REGION='eu-west-3'
+  - export ANSIBLE_CONFIG=ansible.cfg
+script:
+  # - aws eks describe-nodegroup --cluster-name $CLUSTER_NAME --nodegroup-name $NODE_GROUP_NAME --query "nodegroup.resources[0].config.bootstrap.nodeBootstrapConfig.configData" --output text > node-config.yaml
+  - cat ~/.aws/credentials
+  # - cat ~/.aws/config
+  - aws sts get-caller-identity
+  - ansible --version
+  - ansible -m ping all
+  - ansible-inventory --list
+  - ansible-inventory --graph
+  - ansible-playbook -i inventory.ini playbook.yml -e "@vars.env" # -e key_path=.docker/config.json -e "@vars.env" -e "node_config_file=config.yaml"
+needs:
+  - job: deploy_db
+    artifacts: true
 
 deploy_ai:
   stage: ai
