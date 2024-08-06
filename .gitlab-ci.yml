@@ -136,9 +136,37 @@ deploy_stock_app:
   image: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   before_script:
     - pip install pyyaml
+    - wget https://github.com/mikefarah/yq/releases/download/v4.25.1/yq_linux_amd64 -O /usr/local/bin/yq
+    - chmod +x /usr/local/bin/yq
   script:
     # - kubectl create secret generic gitlab-cred --type=kubernetes.io/dockerconfigjson --from-file=.dockerconfigjson=.docker/config.json || echo "Secret already exists"
-    - python3 db_secret.py
+    - |
+      cat <<EOF > gitlab_secret.yml
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: gitlab-cred
+        namespace: default
+      data:
+        .dockerconfigjson: $(cat /home/ubuntu/config.json | base64 -w 0)
+      type: kubernetes.io/dockerconfigjson
+      EOF
+    - kubectl apply -f gitlab_secret.yml
+    - |
+      cat <<EOF > db_secret.yml
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: db-credentials
+        namespace: default
+      data:
+        DB_USER: $(yq eval '.database_username.value' vars.yml | base64 -w 0)
+        DB_PASSWORD: $(yq eval '.database_password.value' vars.yml | base64 -w 0)
+        RDS_ADDRESS: $(yq eval '.rds_address.value' vars.yml | base64 -w 0)
+        DB_NAME: $(yq eval '.database_name.value' vars.yml | base64 -w 0)
+      EOF
+    - kubectl apply -f db_secret.yml
+    # - python3 db_secret.py
     - kubectl apply -f stock_app.yml
   environment:
     name: production
