@@ -109,6 +109,8 @@ deploy_db:
   artifacts:
     paths:
       - vars.yml
+  tags:
+    - build_job_docker
   
 hydrate_db:
   stage: provision
@@ -175,6 +177,8 @@ deploy_stock_app:
       artifacts: true
     - job: build-docker-image
       artifacts: true
+  tags:
+    - build_job_docker
 
 deploy_ai:
   stage: ai
