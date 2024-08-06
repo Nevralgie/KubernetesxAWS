@@ -18,11 +18,12 @@ stock_names = ['AMZN', 'MSFT']  # Replace with your desired stock symbols
 
 # Load database credentials from environment variables
 session = mysqlx.get_session ({
-    'user': os.getenv('DB_USER'),
-    'password': os.getenv('DB_PASSWORD'),
-    'host': 'mysql-service',
-    'schema': os.getenv('DB_NAME'),
-    'ssl-mode': 'DISABLED'  # Use SSL for secure communication
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "host": "mysql-service",
+    'schema': os.getenv("DB_NAME"),
+    'ssl-mode': 'DISABLED',  # Use SSL for secure communication
+    "port": "3306"
 })
 
 def fetch_from_mysql(stock_name):

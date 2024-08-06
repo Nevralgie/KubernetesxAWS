@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: dum-app-container
-          image: registry.gitlab.com/nevii/leverage-your-own-k8s-expert/app_temoin:v0.6_db_prod
+          image: registry.gitlab.com/nevii/leverage-your-own-k8s-expert/app_temoin:v0.7_db_prod
           env:
           - name: DB_NAME
             valueFrom:
