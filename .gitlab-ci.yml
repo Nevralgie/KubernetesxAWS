@@ -154,7 +154,7 @@ deploy_stock_app:
         .dockerconfigjson: $(cat .docker/config.json | base64 -w 0)
       type: kubernetes.io/dockerconfigjson
       EOF
-    - kubectl apply -f gitlab_secret.yml
+    - kubectl create -f gitlab_secret.yml --dry-run=client -o yaml | kubectl apply -f -
     - |
       cat <<EOF > db_secret.yml
       apiVersion: v1
@@ -170,7 +170,7 @@ deploy_stock_app:
       EOF
     - kubectl apply -f db_secret.yml
     # - python3 db_secret.py
-    - kubectl apply -f stock_app.yml
+    - kubectl create -f deployment_stock.yml --dry-run=client -o yaml | kubectl apply -f -
   environment:
     name: production
   needs:
