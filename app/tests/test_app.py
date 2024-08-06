@@ -8,7 +8,7 @@ import io
 import base64
 
 # Import your app
-from your_app_module import app, fetch_from_mysql  # Adjust import based on your actual module
+from app import app, fetch_from_mysql  # Adjust import based on your actual module
 
 # Setup a test client
 @pytest.fixture
