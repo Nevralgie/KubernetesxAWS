@@ -133,7 +133,7 @@ hydrate_db:
 
 deploy_stock_app:
   stage: deploy_stock_app
-  image: python:3.9.17-slim-bullseye
+  image: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   before_script:
     - pip install pyyaml
   script:
