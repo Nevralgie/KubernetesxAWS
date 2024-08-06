@@ -137,8 +137,8 @@ deploy_stock_app:
   before_script:
     - pip install pyyaml
   script:
-    - kubectl create secret generic gitlab-cred --type=kubernetes.io/dockerconfigjson --from-file=.dockerconfigjson=.docker/config.json || echo "Secret already exists"
-    - python db_secret.py
+    # - kubectl create secret generic gitlab-cred --type=kubernetes.io/dockerconfigjson --from-file=.dockerconfigjson=.docker/config.json || echo "Secret already exists"
+    - python3 db_secret.py
     - kubectl apply -f stock_app.yml
   environment:
     name: production
