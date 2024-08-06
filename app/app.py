@@ -17,29 +17,26 @@ img = io.BytesIO()
 stock_names = ['AMZN', 'MSFT']  # Replace with your desired stock symbols
 
 # Load database credentials from environment variables
-session = mysqlx.get_session = {
+session = mysqlx.get_session ({
     'user': os.getenv('DB_USER'),
     'password': os.getenv('DB_PASSWORD'),
     'host': 'mysql-service',
     'schema': os.getenv('DB_NAME'),
     'ssl-mode': 'DISABLED'  # Use SSL for secure communication
-}
+})
 
 def fetch_from_mysql(stock_name):
-    # Create a connection to the MySQL server
-    session = mysqlx.get_session(mysql_config)
-
-    # Get a reference to the default schema (database)
-    schema = session.get_default_schema()
-
     # Execute a query
-    result = schema.get_table('stock_data').select(['Date', 'Open', 'High', 'Low', 'Close', 'AdjClose', 'Volume']).where('StockName = :stock_name').bind('stock_name', stock_name).order_by('Date DESC').limit(100).execute()
+    result = session.sql(f"""
+        SELECT Date, Open, High, Low, Close, AdjClose, Volume
+        FROM stock_data
+        WHERE StockName = '{stock_name}'
+        ORDER BY Date DESC
+        LIMIT 100
+    """).execute()
 
     # Fetch the results
     rows = result.fetch_all()
-
-    # Close the connection
-    session.close()
 
     # Convert to DataFrame
     data = pd.DataFrame(rows)
