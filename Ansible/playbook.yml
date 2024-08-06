@@ -2,12 +2,13 @@
   hosts: localhost
   connection: local #Bypass SSH key check
   gather_facts: no
-  # become: yes
+  vars_files:
+    - vars.yml
   vars:
-    db_host: "{{ lookup('env', 'DB_ENDPOINT') }}"
-    db_name: "{{ lookup('env', 'DB_NAME') }}"
-    db_user: "{{ lookup('env', 'DB_USER') }}"
-    db_password: "{{ lookup('env', 'DB_PASSWORD') }}"
+    db_host: "{{ rds_address.value }}"
+    db_name: "{{ database_name.value }}"
+    db_user: "{{ database_username.value }}"
+    db_password: "{{ database_password.value }}"
                                
 
   tasks:
