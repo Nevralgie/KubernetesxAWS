@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template
-import mysql.connector
+import pymysql
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -21,11 +21,12 @@ mysql_config = {
     'user': os.getenv('DB_USER'),
     'password': os.getenv('DB_PASSWORD'),
     'host': 'mysql-service',
-    'database': os.getenv('DB_NAME')
+    'database': os.getenv('DB_NAME'),
+    'cursorclass': pymysql.cursors.DictCursor  # Use DictCursor for easier data handling
 }
 
 def fetch_from_mysql(stock_name):
-    conn = mysql.connector.connect(**mysql_config)
+    conn = pymysql.connect(**mysql_config)
     cursor = conn.cursor()
 
     query = f"""
@@ -39,7 +40,7 @@ def fetch_from_mysql(stock_name):
     rows = cursor.fetchall()
 
     # Convert to DataFrame
-    data = pd.DataFrame(rows, columns=['Date', 'Open', 'High', 'Low', 'Close', 'AdjClose', 'Volume'])
+    data = pd.DataFrame(rows)
     data.set_index('Date', inplace=True)
 
     cursor.close()
