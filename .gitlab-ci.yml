@@ -31,7 +31,7 @@ build-docker-image:
     # - docker build -t $CI_REGISTRY/nevii/terraform_eks/awsclitoolbox:v0.2 .
     # - docker push $CI_REGISTRY/nevii/terraform_eks/awsclitoolbox:v0.2
     - docker build -t $CI_REGISTRY/nevii/leverage-your-own-k8s-expert/app_temoin:v0.1_db_prod ./app
-    - docker push $CI_REGISTRY/nevii/leverage-your-own-k8s-expert/app_temoin:vv0.1_db_prod
+    - docker push $CI_REGISTRY/nevii/leverage-your-own-k8s-expert/app_temoin:v0.1_db_prod
   artifacts:
     paths:
       - .docker/config.json
