@@ -142,6 +142,7 @@ deploy_stock_app:
     - chmod +x /usr/local/bin/yq
   script:
     # - kubectl create secret generic gitlab-cred --type=kubernetes.io/dockerconfigjson --from-file=.dockerconfigjson=.docker/config.json || echo "Secret already exists"
+    - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
     - |
       cat <<EOF > gitlab_secret.yml
       apiVersion: v1
@@ -150,7 +151,7 @@ deploy_stock_app:
         name: gitlab-cred
         namespace: default
       data:
-        .dockerconfigjson: $(cat /home/ubuntu/config.json | base64 -w 0)
+        .dockerconfigjson: $(cat .docker/config.json | base64 -w 0)
       type: kubernetes.io/dockerconfigjson
       EOF
     - kubectl apply -f gitlab_secret.yml
