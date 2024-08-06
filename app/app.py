@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import io
 import base64
+import cryptography
 
 # Define static folder for css files
 STATIC_DIR = os.path.abspath('./static')
