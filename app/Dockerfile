@@ -12,6 +12,8 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # Install test dependencies
 RUN pip3 install --no-cache-dir pytest pytest-flask requests-mock
 
+ENV PYTHONPATH=/app
+
 # Run tests
 RUN pytest --tb=short --disable-warnings --junitxml=report.xml
 
