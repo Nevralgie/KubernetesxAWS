@@ -1,12 +1,11 @@
 import os
 from flask import Flask, render_template
-import pymysql
+import mysqlx
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import io
 import base64
-import cryptography
 
 # Define static folder for css files
 STATIC_DIR = os.path.abspath('./static')
@@ -18,34 +17,34 @@ img = io.BytesIO()
 stock_names = ['AMZN', 'MSFT']  # Replace with your desired stock symbols
 
 # Load database credentials from environment variables
-mysql_config = {
+session = mysqlx.get_session = {
     'user': os.getenv('DB_USER'),
     'password': os.getenv('DB_PASSWORD'),
     'host': 'mysql-service',
-    'database': os.getenv('DB_NAME'),
-    'cursorclass': pymysql.cursors.DictCursor  # Use DictCursor for easier data handling
+    'schema': os.getenv('DB_NAME'),
+    'ssl-mode': 'DISABLED'  # Use SSL for secure communication
 }
 
 def fetch_from_mysql(stock_name):
-    conn = pymysql.connect(**mysql_config)
-    cursor = conn.cursor()
+    # Create a connection to the MySQL server
+    session = mysqlx.get_session(mysql_config)
 
-    query = f"""
-    SELECT Date, Open, High, Low, Close, AdjClose, Volume
-    FROM stock_data
-    WHERE StockName = %s
-    ORDER BY Date DESC
-    LIMIT 100
-    """
-    cursor.execute(query, (stock_name,))
-    rows = cursor.fetchall()
+    # Get a reference to the default schema (database)
+    schema = session.get_default_schema()
+
+    # Execute a query
+    result = schema.get_table('stock_data').select(['Date', 'Open', 'High', 'Low', 'Close', 'AdjClose', 'Volume']).where('StockName = :stock_name').bind('stock_name', stock_name).order_by('Date DESC').limit(100).execute()
+
+    # Fetch the results
+    rows = result.fetch_all()
+
+    # Close the connection
+    session.close()
 
     # Convert to DataFrame
     data = pd.DataFrame(rows)
     data.set_index('Date', inplace=True)
 
-    cursor.close()
-    conn.close()
     return data
 
 # Perform stock market analysis for each stock name
