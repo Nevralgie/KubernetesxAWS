@@ -20,7 +20,7 @@ stock_names = ['AMZN', 'MSFT']  # Replace with your desired stock symbols
 mysql_config = {
     'user': os.getenv('DB_USER'),
     'password': os.getenv('DB_PASSWORD'),
-    'host': os.getenv('RDS_ADDRESS'),
+    'host': mysql-service,
     'database': os.getenv('DB_NAME')
 }
 
