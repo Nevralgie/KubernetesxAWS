@@ -1,4 +1,12 @@
-
+apiVersion: v1
+  kind: Secret
+  metadata:
+    name: gitlab-cred
+    namespace: default
+  data:
+    .dockerconfigjson: .docker/config.json
+  type: kubernetes.io/dockerconfigjson
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,7 +24,7 @@ spec:
     spec:
       containers:
         - name: dum-app-container
-          image: registry.gitlab.com/nevii/leverage-your-own-k8s-expert/app_temoin:vv0.1_db_prod
+          image: registry.gitlab.com/nevii/leverage-your-own-k8s-expert/app_temoin:v0.1_db_prod
           env:
           - name: DB_NAME
             valueFrom:
