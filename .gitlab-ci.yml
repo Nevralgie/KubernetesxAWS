@@ -109,8 +109,8 @@ deploy_db:
   artifacts:
     paths:
       - vars.yml
-  tags:
-    - build_job_docker
+  # tags:
+  #   - build_job_docker
   
 hydrate_db:
   stage: provision
