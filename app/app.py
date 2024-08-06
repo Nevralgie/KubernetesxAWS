@@ -1,16 +1,14 @@
+import os
 from flask import Flask, render_template
-import yfinance as yf
+import mysql.connector
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import io
 import base64
-import os
 
 # Define static folder for css files
 STATIC_DIR = os.path.abspath('./static')
-
-# app = Flask(__name__) # to make the app run without any
 app = Flask(__name__, static_folder=STATIC_DIR)
 
 img = io.BytesIO()
@@ -18,14 +16,42 @@ img = io.BytesIO()
 # Define the stock names
 stock_names = ['AMZN', 'MSFT']  # Replace with your desired stock symbols
 
+# Load database credentials from environment variables
+mysql_config = {
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'host': os.getenv('RDS_ADDRESS'),
+    'database': os.getenv('DB_NAME')
+}
+
+def fetch_from_mysql(stock_name):
+    conn = mysql.connector.connect(**mysql_config)
+    cursor = conn.cursor()
+
+    query = f"""
+    SELECT Date, Open, High, Low, Close, AdjClose, Volume
+    FROM stock_data
+    WHERE StockName = %s
+    ORDER BY Date DESC
+    LIMIT 100
+    """
+    cursor.execute(query, (stock_name,))
+    rows = cursor.fetchall()
+
+    # Convert to DataFrame
+    data = pd.DataFrame(rows, columns=['Date', 'Open', 'High', 'Low', 'Close', 'AdjClose', 'Volume'])
+    data.set_index('Date', inplace=True)
+
+    cursor.close()
+    conn.close()
+    return data
+
 # Perform stock market analysis for each stock name
 stock_data = {}
 for stock_name in stock_names:
-    # Fetch stock data
-    data = yf.download(stock_name, start='2022-01-01', end='2023-01-01')
-    print(data)
+    data = fetch_from_mysql(stock_name)
 
-# Calculate 50-day moving average
+    # Calculate 50-day moving average
     data['MA50'] = data['Close'].rolling(window=50).mean()
 
     # Calculate 200-day moving average
@@ -74,4 +100,4 @@ def index():
     return render_template('stock_analysis.html', stock_data=stock_data)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=80, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

@@ -11,6 +11,7 @@ stages:
   - deploy
   - deploy-managed-mysql-database
   - provision
+  - deploy_stock_app
   - ai
   - monitor
   - destroy
@@ -27,8 +28,10 @@ build-docker-image:
   before_script:
     - echo "$PULL_PAT_TOKEN" | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin # Connection au registry gitlab
   script:
-    - docker build -t $CI_REGISTRY/nevii/terraform_eks/awsclitoolbox:v0.2 .
-    - docker push $CI_REGISTRY/nevii/terraform_eks/awsclitoolbox:v0.2
+    # - docker build -t $CI_REGISTRY/nevii/terraform_eks/awsclitoolbox:v0.2 .
+    # - docker push $CI_REGISTRY/nevii/terraform_eks/awsclitoolbox:v0.2
+    - docker build -t $CI_REGISTRY/Nevii/leverage-your-own-k8s-expert/app_temoin:v0.1_db_prod ./app
+    - docker push $CI_REGISTRY/Nevii/leverage-your-own-k8s-expert/app_temoin:vv0.1_db_prod
   artifacts:
     paths:
       - .docker/config.json
@@ -60,8 +63,8 @@ deploy:
     - helm repo add eks https://aws.github.io/eks-charts
     - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller || true
     - sleep 30 # aws-load-balancer-webhook-service needs time to be up and running, or else next line will fail
-    - kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/examples/2048/2048_full.yaml
-    - kubectl apply stock_app.yml
+    # - kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/examples/2048/2048_full.yaml
+    # - kubectl apply stock_app.yml
   tags:
     - build_job_docker
   when: manual
@@ -126,6 +129,23 @@ hydrate_db:
     - ansible-playbook -i Ansible/inventory.ini Ansible/playbook.yml -e "@vars.yml" # -e key_path=.docker/config.json -e "@vars.env" -e "node_config_file=config.yaml"
   needs:
     - job: deploy_db
+      artifacts: true
+
+deploy_stock_app:
+  stage: deploy_stock_app
+  image: python:3.9.17-slim-bullseye
+  before_script:
+    - pip install pyyaml
+  script:
+    - kubectl create secret generic gitlab-cred --type=kubernetes.io/dockerconfigjson --from-file=.dockerconfigjson=.docker/config.json || echo "Secret already exists"
+    - python db_secret.py
+    - kubectl apply -f stock_app.yml
+  environment:
+    name: production
+  needs:
+    - job: deploy_db
+      artifacts: true
+    - job: build-docker-image
       artifacts: true
 
 deploy_ai:
