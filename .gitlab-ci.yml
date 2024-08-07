@@ -37,7 +37,7 @@ build-docker-image:
       - .docker/config.json
   tags:
   - build_job_docker
-  when: manual
+  # when: manual
 
 
 deploy:
@@ -67,7 +67,7 @@ deploy:
     # - kubectl apply stock_app.yml
   tags:
     - build_job_docker
-  when: manual
+  # when: manual
   needs:
     - job: build-docker-image
       artifacts: true
@@ -109,6 +109,8 @@ deploy_db:
   artifacts:
     paths:
       - vars.yml
+  needs:
+    - job: deploy
   # tags:
   #   - build_job_docker
   
@@ -193,6 +195,7 @@ deploy_stock_app:
       artifacts: true
     - job: build-docker-image
       artifacts: true
+    - job: hydrate_db
   tags:
     - build_job_docker
 
