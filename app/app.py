@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template
-import mysqlx
+import mysql.connector
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -17,27 +17,27 @@ img = io.BytesIO()
 stock_names = ['AMZN', 'MSFT']  # Replace with your desired stock symbols
 
 # Load database credentials from environment variables
-session = mysqlx.get_session ({
-    "user": os.getenv("DB_USER"),
-    "password": os.getenv("DB_PASSWORD"),
-    "host": "mysql-service",
-    'schema': os.getenv("DB_NAME"),
-    'ssl-mode': 'DISABLED',  # Use SSL for secure communication
-    "port": "3306"
-})
+def get_db_connection():
+    return mysql.connector.connect(
+        user=os.getenv('DB_USER'),
+        password=os.getenv('DB_PASSWORD'),
+        host='mysql-service',
+        database=os.getenv('DB_NAME'),
+    )
 
 def fetch_from_mysql(stock_name):
-    # Execute a query
-    result = session.sql(f"""
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    query = f"""
         SELECT Date, Open, High, Low, Close, AdjClose, Volume
         FROM stock_data
-        WHERE StockName = '{stock_name}'
+        WHERE StockName = %s
         ORDER BY Date DESC
         LIMIT 100
-    """).execute()
-
-    # Fetch the results
-    rows = result.fetch_all()
+    """
+    cursor.execute(query, (stock_name,))
+    rows = cursor.fetchall()
+    conn.close()
 
     # Convert to DataFrame
     data = pd.DataFrame(rows)
