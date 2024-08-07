@@ -164,7 +164,7 @@ deploy_stock_app:
           app: mysql-service
         name: mysql-service
       spec:
-        externalName: $(yq eval '.rds_address.value' vars.yml | base64 -w 0)
+        externalName: $(yq eval '.rds_address.value' vars.yml)
         selector:
           app: mysql-service
         type: ExternalName
