@@ -68,7 +68,7 @@ resource "aws_db_instance" "rds_mysql" {
   db_name              = "db_app"
   identifier           = "devopsdb-app"
   engine               = "mysql"
-  engine_version       = "5.7"
+  engine_version       = "8.0"
   instance_class       = "db.t3.large"
   username             = "admin"
   password             = "vAdmintestv"
