@@ -171,8 +171,6 @@ deploy_stock_app:
     - kubectl apply -f db_secret.yml
     # - python3 db_secret.py
     - kubectl create -f deployment_stock.yml --dry-run=client -o yaml | kubectl apply -f -
-  environment:
-    name: production
   needs:
     - job: deploy_db
       artifacts: true
