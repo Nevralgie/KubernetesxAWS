@@ -156,6 +156,23 @@ deploy_stock_app:
       EOF
     - kubectl create -f gitlab_secret.yml --dry-run=client -o yaml | kubectl apply -f -
     - |
+      cat <<EOF > mysql-service.yml
+      apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          app: mysql-service
+        name: mysql-service
+      spec:
+        externalName: $(yq eval '.rds_address.value' vars.yml | base64 -w 0)
+        selector:
+          app: mysql-service
+        type: ExternalName
+      status:
+        loadBalancer: {}
+      EOF
+    - kubectl create -f mysql-service.yml --dry-run=client -o yaml | kubectl apply -f -
+    - |
       cat <<EOF > db_secret.yml
       apiVersion: v1
       kind: Secret
@@ -168,7 +185,7 @@ deploy_stock_app:
         RDS_ADDRESS: $(yq eval '.rds_address.value' vars.yml | base64 -w 0)
         DB_NAME: $(yq eval '.database_name.value' vars.yml | base64 -w 0)
       EOF
-    - kubectl apply -f db_secret.yml
+    - kubectl create -f db_secret.yml --dry-run=client -o yaml | kubectl apply -f -
     # - python3 db_secret.py
     - kubectl create -f deployment_stock.yml --dry-run=client -o yaml | kubectl apply -f -
   needs:

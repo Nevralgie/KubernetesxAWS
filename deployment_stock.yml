@@ -76,4 +76,4 @@ spec:
             service:
               name: service-stock-app
               port:
-                number: 80
+                number: 5000
