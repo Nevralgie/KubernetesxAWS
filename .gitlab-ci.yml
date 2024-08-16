@@ -225,7 +225,7 @@ deploy_stock_app:
     #   EOF
     # - kubectl create -f db_secret.yml --dry-run=client -o yaml | kubectl apply -f -
     # - kubectl create -f deployment_stock.yml --dry-run=client -o yaml | kubectl apply -f -
-    - echo LB_DNS=$(kubectl get ingress ingress-stock-app -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+    - LB_DNS=$(kubectl get ingress ingress-stock-app -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
     - echo "LB_DNS=$LB_DNS" > lb_dns.env
     - cat lb_dns.env
   # needs:
