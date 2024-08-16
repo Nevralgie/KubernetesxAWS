@@ -66,29 +66,6 @@ build-docker-image:
       - report.xml
       - .docker/config.json
 
-# build-docker-image:
-#   stage: build
-#   image: docker:24.0.5
-#   services:
-#     - docker:dind
-#   variables:
-#     DOCKER_DRIVER: overlay2
-#     DOCKER_TLS_CERTDIR: "" # Vide pour l'instant pour établie la connection entre les conteneurs
-#   before_script:
-#     - echo "$PULL_PAT_TOKEN" | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin # Connection au registry gitlab
-#   script:
-#     # - docker build -t $CI_REGISTRY/nevii/terraform_eks/awsclitoolbox:v0.2 .
-#     # - docker push $CI_REGISTRY/nevii/terraform_eks/awsclitoolbox:v0.2
-#     - docker build -t $CI_REGISTRY/nevii/leverage-your-own-k8s-expert/$DOCKER_IMAGE ./app
-#     - docker push $CI_REGISTRY/nevii/leverage-your-own-k8s-expert/$DOCKER_IMAGE
-#   artifacts:
-#     paths:
-#       - .docker/config.json
-#   tags:
-#   - build_job_docker
-#   # when: manual
-
-
 deploy_eks:
   stage: deploy
   image:
@@ -99,22 +76,21 @@ deploy_eks:
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
-    - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --node-type t2.2xlarge --nodes $NODE_COUNT --alb-ingress-access --node-private-networking --vpc-nat-mode Single || true
-    # Recreate the Load Balancer policy
-    # # - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
-    # # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
-    - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-    - eksctl utils associate-iam-oidc-provider --cluster=$EKS_CLUSTER_NAME --approve || true
-    - aws eks create-access-entry --cluster-name $EKS_CLUSTER_NAME --principal-arn arn:aws:iam::$ACCOUNT_ID:root --type STANDARD --username admin_eks || true
-    - aws eks associate-access-policy --cluster-name $EKS_CLUSTER_NAME  --principal-arn arn:aws:iam::$ACCOUNT_ID:root --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy --access-scope type=cluster || true
-    - eksctl create iamserviceaccount --cluster=$EKS_CLUSTER_NAME --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::$ACCOUNT_ID:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
-    - eksctl create addon --cluster $EKS_CLUSTER_NAME --name vpc-cni --version latest --force # Necessary for aws load balancer controller
-    - eksctl create addon --name aws-ebs-csi-driver --cluster $EKS_CLUSTER_NAME --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy --force # --service-account-role-arn arn:aws:organizations::577409777403:account/o-leoggup8v8/577409777403
-    - helm repo add eks https://aws.github.io/eks-charts
-    - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller || true
-    # - sleep 10 # aws-load-balancer-webhook-service needs time to be up and running, or else next line will fail
-    # - kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/examples/2048/2048_full.yaml
-    # - kubectl apply stock_app.yml
+    # - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --node-type t2.2xlarge --nodes $NODE_COUNT --alb-ingress-access --node-private-networking --vpc-nat-mode Single || true
+    # # Recreate the Load Balancer policy
+    # # # - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
+    # # # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
+    # - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+    # - eksctl utils associate-iam-oidc-provider --cluster=$EKS_CLUSTER_NAME --approve || true
+    # - aws eks create-access-entry --cluster-name $EKS_CLUSTER_NAME --principal-arn arn:aws:iam::$ACCOUNT_ID:root --type STANDARD --username admin_eks || true
+    # - aws eks associate-access-policy --cluster-name $EKS_CLUSTER_NAME  --principal-arn arn:aws:iam::$ACCOUNT_ID:root --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy --access-scope type=cluster || true
+    # - eksctl create iamserviceaccount --cluster=$EKS_CLUSTER_NAME --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::$ACCOUNT_ID:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
+    # - eksctl create addon --cluster $EKS_CLUSTER_NAME --name vpc-cni --version latest --force # Necessary for aws load balancer controller
+    # - eksctl create addon --name aws-ebs-csi-driver --cluster $EKS_CLUSTER_NAME --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy --force # --service-account-role-arn arn:aws:organizations::577409777403:account/o-leoggup8v8/577409777403
+    # - helm repo add eks https://aws.github.io/eks-charts
+    # - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller || true
+    # # - sleep 10 # aws-load-balancer-webhook-service needs time to be up and running, or else next line will fail
+    # # - kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/examples/2048/2048_full.yaml
   tags:
     - build_job_docker
   # when: manual
@@ -134,6 +110,7 @@ deploy_db:
   before_script:
     # yq packages needs to be installed on the runner instance
     - export TF_PASSWORD=${GITLAB_ACCESS_TOKEN}
+    - cd $CI_PROJECT_DIR/Terraform_Infra
     - rm -rf .terraform
     - terraform --version
     - terraform init -backend-config=password=${TF_PASSWORD}
@@ -156,8 +133,8 @@ deploy_db:
     # - echo "DB_PASSWORD=$DB_PASSWORD" >> vars.env
     # - echo "DB_NAME=$DB_NAME" >> vars.env
     - cat vars.yml
-  needs:
-    - deploy_eks
+  # needs:
+  #   - deploy_eks
   # when: manual
   artifacts:
     paths:
@@ -244,7 +221,6 @@ deploy_stock_app:
       artifacts: true
     - job: build-docker-image
       artifacts: true
-    - job: hydrate_db
   tags:
     - build_job_docker
 
@@ -300,8 +276,6 @@ monitoring:
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   script:
-    - echo $EKS_CLUSTER_NAME
-    - echo $AWS_REGION
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
