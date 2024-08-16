@@ -315,6 +315,7 @@ locust_loadtest:
   image: python:3.9-slim
   before_script: 
     - pip install locust
+    - pip uninstall locust
   script:
     - source lb_dns.env
     - locust
