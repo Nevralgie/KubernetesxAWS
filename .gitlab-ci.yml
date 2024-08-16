@@ -317,6 +317,7 @@ locust_loadtest:
     - pip install locust
   script:
     - source lb_dns.env
+    - locust
     - locust -f $CI_PROJECT_DIR/Locust/locustfile.py --headless --users 200 --spawn-rate 10 --run-time 10m --host=http://$LB_DNS
   needs:
     - job: deploy_stock_app
