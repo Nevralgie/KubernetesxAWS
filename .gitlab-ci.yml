@@ -305,8 +305,8 @@ monitoring:
     - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom --create-namespace -f $CI_PROJECT_DIR/K8s/manifests/monitoring/values.yml || true
   tags:
     - build_job_docker
-  needs:
-    - deploy_eks
+  # needs:
+  #   - deploy_eks
   when: manual
 
 # Job to run the load test using the DNS fetched in the previous job
