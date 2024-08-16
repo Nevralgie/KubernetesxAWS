@@ -121,7 +121,7 @@ build-docker-image:
 #     - terraform --version
 #     - terraform init -backend-config=password=${TF_PASSWORD}
 #     - VPC_ID=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.resourcesVpcConfig.vpcId" --output text)
-#     - RTB_ID=$(aws ec2 describe-route-tables --region $AWS_REGION --filters "Name=vpc-id,Values=$VPC_ID" --query "RouteTables[0].RouteTableId" --output text)
+#     - RTB_ID=$(aws ec2 describe-route-tables --region $AWS_REGION --filters "Name=vpc-id,Values=$VPC_ID" --query "RouteTables[?starts_with(RouteTableId, 'rtb')].RouteTableId" --output text)
 #   script:
 #     - echo $VPC_ID
 #     - echo $RTB_ID
@@ -131,13 +131,7 @@ build-docker-image:
 #     - terraform apply -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" --auto-approve
 #     - terraform output -json | yq eval -P '.' > vars.yml
 #     # - DB_ENDPOINT=$(terraform output -raw rds_address)
-#     # - DB_USER=$(terraform output -raw database_username)
-#     # - DB_PASSWORD=$(terraform output -raw database_password)
-#     # - DB_NAME=$(terraform output -raw database_name)
 #     # - echo "DB_ENDPOINT=$DB_ENDPOINT" > vars.env
-#     # - echo "DB_USER=$DB_USER" >> vars.env
-#     # - echo "DB_PASSWORD=$DB_PASSWORD" >> vars.env
-#     # - echo "DB_NAME=$DB_NAME" >> vars.env
 #     - cat vars.yml
 #   # needs:
 #   #   - deploy_eks
