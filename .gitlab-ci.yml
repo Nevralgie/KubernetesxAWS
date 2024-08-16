@@ -15,6 +15,7 @@ stages:
   # - deploy_stock_app
   # - ai
   - monitor
+  - loadtest
   - destroy_infra
   - destroy_cluster
 
@@ -296,25 +297,15 @@ monitoring:
     - deploy_eks
   when: manual
 
-# Job to fetch the load balancer DNS and store it in a CI variable
-fetch_lb_dns:
-  stage: fetch_dns
-  image: bitnami/kubectl:latest
-  script:
-    - echo "Fetching Load Balancer DNS..."
-    - export LB_DNS=$(kubectl get svc <service-name> -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-    - echo $LB_DNS
-  artifacts:
-    reports:
-      dotenv: lb_dns.env
-
 # Job to run the load test using the DNS fetched in the previous job
-loadtest:
+locust_loadtest:
   stage: loadtest
   image: locustio/locust
   script:
     - source lb_dns.env
     - locust -f locustfile.py --headless --users 200 --spawn-rate 10 --run-time 10m --host=http://$LB_DNS
+  needs:
+    - deploy_stock_app
 
 destroy:
   stage: destroy_infra
