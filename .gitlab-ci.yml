@@ -5,6 +5,7 @@ variables:
   NODE_COUNT: "3"
   ACCOUNT_ID: "$AWS_ACCOUNT_ID"
   DOCKER_IMAGE: "app_temoin"
+  APP_SERVICE_NAME: service-stock-app
 
 stages:
   - build
@@ -216,11 +217,15 @@ deploy_stock_app:
     - kubectl create -f db_secret.yml --dry-run=client -o yaml | kubectl apply -f -
     # - python3 db_secret.py
     - kubectl create -f deployment_stock.yml --dry-run=client -o yaml | kubectl apply -f -
+    - export LB_DNS=$(kubectl get svc $APP_SERVICE_NAME -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+    - echo $LB_DNS
   needs:
     - job: deploy_db
       artifacts: true
     - job: build-docker-image
       artifacts: true
+    - reports:
+        dotenv: lb_dns.env
   tags:
     - build_job_docker
 
@@ -269,7 +274,7 @@ deploy_ai:
     - build_job_docker
   # needs:
   #   - deploy
-  # when: manual
+  when: manual
 
 monitoring:
   stage: monitor
@@ -284,37 +289,6 @@ monitoring:
     - helm repo update eks
     - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
     - helm repo update
-    # - |
-    #   cat <<EOF > values.yaml
-    #   prometheus:
-    #     prometheusSpec:
-    #       serviceMonitorSelectorNilUsesHelmValues: false
-    #       ruleSelectorNilUsesHelmValues: false
-    #       podMonitorSelectorNilUsesHelmValues: false
-    #       probeSelectorNilUsesHelmValues: false
-    #   grafana:
-    #     enabled: true
-    #     adminPassword: Azurev69007
-    #     service:
-    #       type: ClusterIP
-    #       port: 80
-    #       targetPort: 3000
-    #     ingress:
-    #       enabled: true
-    #       ingressClassName: alb
-    #       annotations:
-    #         alb.ingress.kubernetes.io/scheme: internet-facing
-    #         alb.ingress.kubernetes.io/target-type: ip
-    #       paths:
-    #         - path: /
-    #           pathType: Prefix
-    #           backend:
-    #             service:
-    #               name: kube-prometheus-stack-grafana
-    #               port:
-    #                 number: 80
-    #       tls: []
-    #   EOF
     - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom --create-namespace -f $CI_PROJECT_DIR/K8s/manifests/monitoring/values.yml || true
   tags:
     - build_job_docker
@@ -329,7 +303,7 @@ fetch_lb_dns:
   script:
     - echo "Fetching Load Balancer DNS..."
     - export LB_DNS=$(kubectl get svc <service-name> -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-    - echo "Load Balancer DNS: $LB_DNS"
+    - echo $LB_DNS
   artifacts:
     reports:
       dotenv: lb_dns.env
