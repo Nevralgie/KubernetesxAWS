@@ -80,6 +80,7 @@ resource "aws_db_instance" "rds_mysql" {
 
 # Security group for the RDS instance
 resource "aws_security_group" "rds_sg" {
+  description = "SG allowing 3306 for MySQL from nodes and runner"
   vpc_id = data.aws_vpc.eks_vpc.id
 }
 
