@@ -2,9 +2,9 @@ variables:
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
   EKS_CLUSTER_NAME: "demo-eks-k8sgptxlocalai-v1"
   AWS_REGION: "eu-west-3"
-  NODE_COUNT: "2"
+  NODE_COUNT: "3"
   ACCOUNT_ID: "$AWS_ACCOUNT_ID"
-
+  DOCKER_IMAGE: "app_temoin:v0.11_db_prod"
 
 stages:
   - build
@@ -16,6 +16,56 @@ stages:
   - monitor
   - destroy
   - destroy_infra
+
+
+build-docker-image:
+  stage: build
+  image: 
+    name: docker:24.0.5
+  services:
+    - docker:dind
+  variables: 
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    # Connection to the gitlab Registry
+    - echo $REGISTRY_TOKEN | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin
+    # Create a separate docker network for testing
+    - docker network create test_env
+  script:
+    # Build a first test image
+    # Unit tests are integrated into the Dockerfile build
+    - docker build --target build -t $CI_REGISTRY/$DOCKER_IMAGE:test ./app
+    # Run the container on the test network to copy the report.xml - Result report of the unit tests
+    - docker run -d --name test_app_cont --hostname stock_analysis --network test_env -p 5000:5000 $CI_REGISTRY/$DOCKER_IMAGE:test
+    # Wait for container to spin-up before attempting to copy the targeted content
+    - sleep 5
+    - docker cp test_app_cont:/app/report.xml $CI_PROJECT_DIR/report.xml
+    # Remove useless container
+    - docker rm -f test_app_cont
+    # Build the release candidate image for Owasp testing
+    - docker build --target production -t $CI_REGISTRY/ara1504621/terraform-test/$DOCKER_IMAGE:rcandidate ./app
+    # Run the release candidate image for Owasp testing
+    - docker run -d --name test_app_cont --hostname stock_analysis --network test_env -p 5000:5000 $CI_REGISTRY/ara1504621/terraform-test/$DOCKER_IMAGE:rcandidate
+    # Make sure the rc container is up and running as expected
+    - until docker run --network test_env --rm curlimages/curl curl http://stock_analysis:5000; do echo "Waiting for app to start..."; sleep 5; done
+    # logout to pull image from public docker registry
+    - docker logout
+    # Run the owasp container with the automation framework symlinked to the stock_analysis_zap.yml template in repo
+    - docker run --rm --name owaspzap --network test_env -v $(pwd):/zap/reports/:rw -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable bash -c "zap.sh -cmd -addonupdate; zap.sh -cmd -quickurl http://stock_analysis:5000 -autorun /zap/wrk/stock_analysis_zap.yml"
+    # Login again to our Gitlab container registry to push the rc image there
+    - echo "$REGISTRY_TOKEN" | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin
+    - docker push $CI_REGISTRY/ara1504621/terraform-test/$DOCKER_IMAGE:rcandidate
+  tags:
+    - build_job_docker
+  artifacts:
+    # Store the needed results of the Job
+    name: "build_and_reports"
+    paths:
+      - ./app
+      - combinedHtmlReport.html
+      - report.xml
+      - .docker/config.json
 
 build-docker-image:
   stage: build
@@ -30,8 +80,8 @@ build-docker-image:
   script:
     # - docker build -t $CI_REGISTRY/nevii/terraform_eks/awsclitoolbox:v0.2 .
     # - docker push $CI_REGISTRY/nevii/terraform_eks/awsclitoolbox:v0.2
-    - docker build -t $CI_REGISTRY/nevii/leverage-your-own-k8s-expert/app_temoin:v0.11_db_prod ./app
-    - docker push $CI_REGISTRY/nevii/leverage-your-own-k8s-expert/app_temoin:v0.11_db_prod
+    - docker build -t $CI_REGISTRY/nevii/leverage-your-own-k8s-expert/$DOCKER_IMAGE ./app
+    - docker push $CI_REGISTRY/nevii/leverage-your-own-k8s-expert/$DOCKER_IMAGE
   artifacts:
     paths:
       - .docker/config.json
@@ -62,7 +112,7 @@ deploy:
     - eksctl create addon --name aws-ebs-csi-driver --cluster $EKS_CLUSTER_NAME --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy --force # --service-account-role-arn arn:aws:organizations::577409777403:account/o-leoggup8v8/577409777403
     - helm repo add eks https://aws.github.io/eks-charts
     - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller || true
-    - sleep 30 # aws-load-balancer-webhook-service needs time to be up and running, or else next line will fail
+    # - sleep 10 # aws-load-balancer-webhook-service needs time to be up and running, or else next line will fail
     # - kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/examples/2048/2048_full.yaml
     # - kubectl apply stock_app.yml
   tags:
@@ -120,12 +170,10 @@ hydrate_db:
   # image: python:3.9.17-slim-bullseye
   before_script:
     - export AWS_PROFILE=aws_profile
-    - export AWS_REGION='eu-west-3'
+    - export AWS_REGION=$AWS_REGION
     - export ANSIBLE_CONFIG=ansible.cfg
   script:
-    # - aws eks describe-nodegroup --cluster-name $CLUSTER_NAME --nodegroup-name $NODE_GROUP_NAME --query "nodegroup.resources[0].config.bootstrap.nodeBootstrapConfig.configData" --output text > node-config.yaml
     - cat ~/.aws/credentials
-    # - cat ~/.aws/config
     - aws sts get-caller-identity
     - ansible --version
     - ansible -m ping all
@@ -206,8 +254,6 @@ deploy_ai:
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   script:
-    - echo $EKS_CLUSTER_NAME
-    - echo $AWS_REGION
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
@@ -225,7 +271,7 @@ deploy_ai:
     - helm install release k8sgpt/k8sgpt-operator -n k8sgpt-operator-system --create-namespace || true
     - kubectl create -f namespace.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f pvc.yml --dry-run=client -o yaml | kubectl apply -f -
-    # - kubectl create -f storageclass.yml --dry-run=client -o yaml | kubectl apply -f -
+    - kubectl create -f storageclass.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f deployment.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f service.yml --dry-run=client -o yaml | kubectl apply -f -
     - |
@@ -326,9 +372,10 @@ destroy:
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   before_script:
-    - terraform init
+    - export TF_PASSWORD=${GITLAB_ACCESS_TOKEN}
     - VPC_ID=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.resourcesVpcConfig.vpcId" --output text)
     - RTB_ID=$(aws ec2 describe-route-tables --region $AWS_REGION --filters "Name=vpc-id,Values=$VPC_ID" --query "RouteTables[0].RouteTableId" --output text)
+    - terraform init -backend-config=password=${TF_PASSWORD}
   script:
     - terraform destroy -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" --auto-approve
   when: manual
