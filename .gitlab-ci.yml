@@ -227,9 +227,9 @@ deploy_stock_app:
     # - kubectl create -f deployment_stock.yml --dry-run=client -o yaml | kubectl apply -f -
     - export LB_DNS=$(kubectl get ingress ingress-stock-app -o jsonpath='{.status.loadBalancer.ingress[0].hostname}') > lb_dns.env
     - echo $LB_DNS
-  needs:
-    - job: deploy_db
-      artifacts: true
+  # needs:
+  #   - job: deploy_db
+  #     artifacts: true
     # - job: build-docker-image
     #   artifacts: true
   artifacts:
