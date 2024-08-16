@@ -348,22 +348,6 @@ monitoring:
     - deploy_eks
   # when: manual
 
-clean:
-  stage: destroy
-  image:
-    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
-  script:
-    - echo $EKS_CLUSTER_NAME
-    - echo $AWS_REGION
-    - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME  # $EKS_CLUSTER_NAME demo-eks-appv1
-    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-    - aws configure set region $AWS_REGION
-    - eksctl delete cluster --name $EKS_CLUSTER_NAME
-  tags:
-    - build_job_docker
-  when: manual
-
 destroy:
   stage: destroy_infra
   image:
@@ -378,3 +362,19 @@ destroy:
   when: manual
   tags:
     - build_job_docker
+
+clean:
+  stage: destroy_cluster
+  image:
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
+  script:
+    - echo $EKS_CLUSTER_NAME
+    - echo $AWS_REGION
+    - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME  # $EKS_CLUSTER_NAME demo-eks-appv1
+    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+    - aws configure set region $AWS_REGION
+    - eksctl delete cluster --name $EKS_CLUSTER_NAME
+  tags:
+    - build_job_docker
+  when: manual
