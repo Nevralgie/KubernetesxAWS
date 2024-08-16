@@ -204,20 +204,20 @@ deploy_stock_app:
     #     loadBalancer: {}
     #   EOF
     # - kubectl create -f mysql-service.yml --dry-run=client -o yaml | kubectl apply -f -
-    # - |
-    #   cat <<EOF > db_secret.yml
-    #   apiVersion: v1
-    #   kind: Secret
-    #   metadata:
-    #     name: db-credentials
-    #     namespace: default
-    #   data:
-    #     DB_USER: $(yq eval '.database_username.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
-    #     DB_PASSWORD: $(yq eval '.database_password.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
-    #     RDS_ADDRESS: $(yq eval '.rds_address.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
-    #     DB_NAME: $(yq eval '.database_name.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
-    #   EOF
-    # - kubectl create -f db_secret.yml --dry-run=client -o yaml | kubectl apply -f -
+    - |
+      cat <<EOF > db_secret.yml
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: db-credentials
+        namespace: default
+      data:
+        DB_USER: $(yq eval '.database_username.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
+        DB_PASSWORD: $(yq eval '.database_password.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
+        RDS_ADDRESS: $(yq eval '.rds_address.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
+        DB_NAME: $(yq eval '.database_name.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
+      EOF
+    - kubectl create -f db_secret.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f deployment_stock.yml --dry-run=client -o yaml | kubectl apply -f -
     - LB_DNS=$(kubectl get ingress ingress-stock-app -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
     - echo "LB_DNS=$LB_DNS" > lb_dns.env
