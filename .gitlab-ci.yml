@@ -315,11 +315,9 @@ locust_loadtest:
   image: python:3.9-slim
   before_script: 
     - pip install locust
-    - pip uninstall locust
   script:
     - source lb_dns.env
-    - locust
-    - locust -f $CI_PROJECT_DIR/Locust/locustfile.py --headless --users 200 --spawn-rate 10 --run-time 10m --host=http://$LB_DNS
+    - /home/gitlab-runner/.local/bin/locust -f $CI_PROJECT_DIR/Locust/locustfile.py --headless --users 200 --spawn-rate 10 --run-time 10m --host=http://$LB_DNS
   needs:
     - job: deploy_stock_app
       artifacts: true
