@@ -138,7 +138,7 @@ deploy_db:
   # when: manual
   artifacts:
     paths:
-      - vars.yml
+      - $CI_PROJECT_DIR/Terraform_Infra/vars.yml
   # tags:
   #   - build_job_docker
 
