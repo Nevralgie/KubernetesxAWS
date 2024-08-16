@@ -103,6 +103,8 @@ deploy_eks:
 
 deploy_db:
   stage: deploy
+  image:
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   environment:
     name: production
   before_script:
@@ -134,6 +136,8 @@ deploy_db:
     expire_in: 1 days
     paths:
       - $CI_PROJECT_DIR/Terraform_Infra/vars.yml
+  tags:
+    - build_job_docker
   # when: manual
 
   
