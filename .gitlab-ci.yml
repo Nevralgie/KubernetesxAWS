@@ -233,12 +233,8 @@ deploy_stock_app:
     # - job: build-docker-image
     #   artifacts: true
   artifacts:
-    untracked: false
-    when: on_success
-    access: developer
-    expire_in: 1 days
-     reports:
-      dotenv: $CI_PROJECT_DIR/lb_dns.env
+    reports:
+    dotenv: $CI_PROJECT_DIR/lb_dns.env
   tags:
     - build_job_docker
 
