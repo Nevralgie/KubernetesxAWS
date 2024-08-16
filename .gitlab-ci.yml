@@ -5,7 +5,7 @@ variables:
   NODE_COUNT: "3"
   ACCOUNT_ID: "$AWS_ACCOUNT_ID"
   DOCKER_IMAGE: "app_temoin"
-  APP_SERVICE_NAME: service-stock-app
+  APP_INGRESS_NAME: ingress-stock-app
 
 stages:
   - build
@@ -19,158 +19,158 @@ stages:
   - destroy_infra
   - destroy_cluster
 
-build-docker-image:
-  stage: build
-  image: 
-    name: docker:24.0.5
-  services:
-    - docker:dind
-  variables: 
-    DOCKER_DRIVER: overlay2
-    DOCKER_TLS_CERTDIR: ""
-  before_script:
-    # Connection to the gitlab Registry
-    - echo "$PULL_PAT_TOKEN" | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin
-    # Create a separate docker network for testing
-    - docker network create test_env
-  script:
-    # Build a first test image
-    # Unit tests are integrated into the Dockerfile build
-    - docker build --target build -t $CI_REGISTRY/$DOCKER_IMAGE:test ./app
-    # Run the container on the test network to copy the report.xml - Result report of the unit tests
-    - docker run -d --name test_app_cont --hostname stock_analysis --network test_env -p 5000:5000 $CI_REGISTRY/$DOCKER_IMAGE:test
-    # Wait for container to spin-up before attempting to copy the targeted content
-    - sleep 5
-    - docker cp test_app_cont:/app/report.xml $CI_PROJECT_DIR/report.xml
-    # Remove useless container
-    - docker rm -f test_app_cont
-    # Build the release candidate image for Owasp testing
-    - docker build --target production -t $CI_REGISTRY/nevii/terraform_eks/$DOCKER_IMAGE:vprod1.0 ./app
-    # Run the release candidate image for Owasp testing
-    - docker run -d --name test_app_cont --hostname stock_analysis --network test_env -p 5000:5000 $CI_REGISTRY/nevii/terraform_eks/$DOCKER_IMAGE:vprod1.0
-    # Make sure the rc container is up and running as expected
-    - until docker run --network test_env --rm curlimages/curl curl http://stock_analysis:5000; do echo "Waiting for app to start..."; sleep 5; done
-    # logout to pull image from public docker registry
-    - docker logout
-    # Run the owasp container with the automation framework symlinked to the stock_analysis_zap.yml template in repo
-    - docker run --rm --name owaspzap --network test_env -v $(pwd):/zap/reports/:rw -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable bash -c "zap.sh -cmd -addonupdate; zap.sh -cmd -quickurl http://stock_analysis:5000 -autorun /zap/wrk/stock_analysis_zap.yml"
-    # Login again to our Gitlab container registry to push the rc image there
-    - echo "$PULL_PAT_TOKEN" | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin
-    - docker push $CI_REGISTRY/nevii/terraform_eks/$DOCKER_IMAGE:vprod1.0
-  tags:
-    - build_job_docker
-  artifacts:
-    # Store the needed results of the Job
-    untracked: false
-    when: on_success
-    access: developer
-    expire_in: 30 days
-    name: "build_and_reports"
-    paths:
-      - ./app
-      - combinedHtmlReport.html
-      - report.xml
-      - .docker/config.json
+# build-docker-image:
+#   stage: build
+#   image: 
+#     name: docker:24.0.5
+#   services:
+#     - docker:dind
+#   variables: 
+#     DOCKER_DRIVER: overlay2
+#     DOCKER_TLS_CERTDIR: ""
+#   before_script:
+#     # Connection to the gitlab Registry
+#     - echo "$PULL_PAT_TOKEN" | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin
+#     # Create a separate docker network for testing
+#     - docker network create test_env
+#   script:
+#     # Build a first test image
+#     # Unit tests are integrated into the Dockerfile build
+#     - docker build --target build -t $CI_REGISTRY/$DOCKER_IMAGE:test ./app
+#     # Run the container on the test network to copy the report.xml - Result report of the unit tests
+#     - docker run -d --name test_app_cont --hostname stock_analysis --network test_env -p 5000:5000 $CI_REGISTRY/$DOCKER_IMAGE:test
+#     # Wait for container to spin-up before attempting to copy the targeted content
+#     - sleep 5
+#     - docker cp test_app_cont:/app/report.xml $CI_PROJECT_DIR/report.xml
+#     # Remove useless container
+#     - docker rm -f test_app_cont
+#     # Build the release candidate image for Owasp testing
+#     - docker build --target production -t $CI_REGISTRY/nevii/terraform_eks/$DOCKER_IMAGE:vprod1.0 ./app
+#     # Run the release candidate image for Owasp testing
+#     - docker run -d --name test_app_cont --hostname stock_analysis --network test_env -p 5000:5000 $CI_REGISTRY/nevii/terraform_eks/$DOCKER_IMAGE:vprod1.0
+#     # Make sure the rc container is up and running as expected
+#     - until docker run --network test_env --rm curlimages/curl curl http://stock_analysis:5000; do echo "Waiting for app to start..."; sleep 5; done
+#     # logout to pull image from public docker registry
+#     - docker logout
+#     # Run the owasp container with the automation framework symlinked to the stock_analysis_zap.yml template in repo
+#     - docker run --rm --name owaspzap --network test_env -v $(pwd):/zap/reports/:rw -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable bash -c "zap.sh -cmd -addonupdate; zap.sh -cmd -quickurl http://stock_analysis:5000 -autorun /zap/wrk/stock_analysis_zap.yml"
+#     # Login again to our Gitlab container registry to push the rc image there
+#     - echo "$PULL_PAT_TOKEN" | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin
+#     - docker push $CI_REGISTRY/nevii/terraform_eks/$DOCKER_IMAGE:vprod1.0
+#   tags:
+#     - build_job_docker
+#   artifacts:
+#     # Store the needed results of the Job
+#     untracked: false
+#     when: on_success
+#     access: developer
+#     expire_in: 30 days
+#     name: "build_and_reports"
+#     paths:
+#       - ./app
+#       - combinedHtmlReport.html
+#       - report.xml
+#       - .docker/config.json
 
-deploy_eks:
-  stage: deploy
-  image:
-    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
-  environment:
-    name: production
-  script:
-    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-    - aws configure set region $AWS_REGION
-    # - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --node-type t2.2xlarge --nodes $NODE_COUNT --alb-ingress-access --node-private-networking --vpc-nat-mode Single || true
-    # # Recreate the Load Balancer policy
-    # # # - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
-    # # # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
-    # - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-    # - eksctl utils associate-iam-oidc-provider --cluster=$EKS_CLUSTER_NAME --approve || true
-    # - aws eks create-access-entry --cluster-name $EKS_CLUSTER_NAME --principal-arn arn:aws:iam::$ACCOUNT_ID:root --type STANDARD --username admin_eks || true
-    # - aws eks associate-access-policy --cluster-name $EKS_CLUSTER_NAME  --principal-arn arn:aws:iam::$ACCOUNT_ID:root --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy --access-scope type=cluster || true
-    # - eksctl create iamserviceaccount --cluster=$EKS_CLUSTER_NAME --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::$ACCOUNT_ID:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
-    # - eksctl create addon --cluster $EKS_CLUSTER_NAME --name vpc-cni --version latest --force # Necessary for aws load balancer controller
-    # - eksctl create addon --name aws-ebs-csi-driver --cluster $EKS_CLUSTER_NAME --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy --force # --service-account-role-arn arn:aws:organizations::577409777403:account/o-leoggup8v8/577409777403
-    # - helm repo add eks https://aws.github.io/eks-charts
-    # - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller || true
-    # # - sleep 10 # aws-load-balancer-webhook-service needs time to be up and running, or else next line will fail
-    # # - kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/examples/2048/2048_full.yaml
-  tags:
-    - build_job_docker
-  # when: manual
-  needs:
-    - job: build-docker-image
-      artifacts: true
+# deploy_eks:
+#   stage: deploy
+#   image:
+#     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
+#   environment:
+#     name: production
+#   script:
+#     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+#     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+#     - aws configure set region $AWS_REGION
+#     # - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --node-type t2.2xlarge --nodes $NODE_COUNT --alb-ingress-access --node-private-networking --vpc-nat-mode Single || true
+#     # # Recreate the Load Balancer policy
+#     # # # - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
+#     # # # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
+#     # - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+#     # - eksctl utils associate-iam-oidc-provider --cluster=$EKS_CLUSTER_NAME --approve || true
+#     # - aws eks create-access-entry --cluster-name $EKS_CLUSTER_NAME --principal-arn arn:aws:iam::$ACCOUNT_ID:root --type STANDARD --username admin_eks || true
+#     # - aws eks associate-access-policy --cluster-name $EKS_CLUSTER_NAME  --principal-arn arn:aws:iam::$ACCOUNT_ID:root --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy --access-scope type=cluster || true
+#     # - eksctl create iamserviceaccount --cluster=$EKS_CLUSTER_NAME --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::$ACCOUNT_ID:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
+#     # - eksctl create addon --cluster $EKS_CLUSTER_NAME --name vpc-cni --version latest --force # Necessary for aws load balancer controller
+#     # - eksctl create addon --name aws-ebs-csi-driver --cluster $EKS_CLUSTER_NAME --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy --force # --service-account-role-arn arn:aws:organizations::577409777403:account/o-leoggup8v8/577409777403
+#     # - helm repo add eks https://aws.github.io/eks-charts
+#     # - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller || true
+#     # # - sleep 10 # aws-load-balancer-webhook-service needs time to be up and running, or else next line will fail
+#     # # - kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/examples/2048/2048_full.yaml
+#   tags:
+#     - build_job_docker
+#   # when: manual
+#   needs:
+#     - job: build-docker-image
+#       artifacts: true
 
-deploy_db:
-  stage: deploy
-  # image:
-  #   name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
-  #   entrypoint:
-  #     - '/usr/bin/env'
-  #     - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
-  environment:
-    name: production
-  before_script:
-    # yq packages needs to be installed on the runner instance
-    - export TF_PASSWORD=${GITLAB_ACCESS_TOKEN}
-    - cd $CI_PROJECT_DIR/Terraform_Infra
-    - rm -rf .terraform
-    - terraform --version
-    - terraform init -backend-config=password=${TF_PASSWORD}
-    - VPC_ID=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.resourcesVpcConfig.vpcId" --output text)
-    - RTB_ID=$(aws ec2 describe-route-tables --region $AWS_REGION --filters "Name=vpc-id,Values=$VPC_ID" --query "RouteTables[0].RouteTableId" --output text)
-  script:
-    - echo $VPC_ID
-    - echo $RTB_ID
-    - terraform fmt -recursive
-    - terraform validate
-    - terraform plan -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD"
-    - terraform apply -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" --auto-approve
-    - terraform output -json | yq eval -P '.' > vars.yml
-    # - DB_ENDPOINT=$(terraform output -raw rds_address)
-    # - DB_USER=$(terraform output -raw database_username)
-    # - DB_PASSWORD=$(terraform output -raw database_password)
-    # - DB_NAME=$(terraform output -raw database_name)
-    # - echo "DB_ENDPOINT=$DB_ENDPOINT" > vars.env
-    # - echo "DB_USER=$DB_USER" >> vars.env
-    # - echo "DB_PASSWORD=$DB_PASSWORD" >> vars.env
-    # - echo "DB_NAME=$DB_NAME" >> vars.env
-    - cat vars.yml
-  # needs:
-  #   - deploy_eks
-  # when: manual
-  artifacts:
-    untracked: false
-    when: on_success
-    access: developer
-    expire_in: 1 days
-    paths:
-      - $CI_PROJECT_DIR/Terraform_Infra/vars.yml
-  # tags:
-  #   - build_job_docker
+# deploy_db:
+#   stage: deploy
+#   # image:
+#   #   name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
+#   #   entrypoint:
+#   #     - '/usr/bin/env'
+#   #     - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+#   environment:
+#     name: production
+#   before_script:
+#     # yq packages needs to be installed on the runner instance
+#     - export TF_PASSWORD=${GITLAB_ACCESS_TOKEN}
+#     - cd $CI_PROJECT_DIR/Terraform_Infra
+#     - rm -rf .terraform
+#     - terraform --version
+#     - terraform init -backend-config=password=${TF_PASSWORD}
+#     - VPC_ID=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.resourcesVpcConfig.vpcId" --output text)
+#     - RTB_ID=$(aws ec2 describe-route-tables --region $AWS_REGION --filters "Name=vpc-id,Values=$VPC_ID" --query "RouteTables[0].RouteTableId" --output text)
+#   script:
+#     - echo $VPC_ID
+#     - echo $RTB_ID
+#     - terraform fmt -recursive
+#     - terraform validate
+#     - terraform plan -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD"
+#     - terraform apply -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" --auto-approve
+#     - terraform output -json | yq eval -P '.' > vars.yml
+#     # - DB_ENDPOINT=$(terraform output -raw rds_address)
+#     # - DB_USER=$(terraform output -raw database_username)
+#     # - DB_PASSWORD=$(terraform output -raw database_password)
+#     # - DB_NAME=$(terraform output -raw database_name)
+#     # - echo "DB_ENDPOINT=$DB_ENDPOINT" > vars.env
+#     # - echo "DB_USER=$DB_USER" >> vars.env
+#     # - echo "DB_PASSWORD=$DB_PASSWORD" >> vars.env
+#     # - echo "DB_NAME=$DB_NAME" >> vars.env
+#     - cat vars.yml
+#   # needs:
+#   #   - deploy_eks
+#   # when: manual
+#   artifacts:
+#     untracked: false
+#     when: on_success
+#     access: developer
+#     expire_in: 1 days
+#     paths:
+#       - $CI_PROJECT_DIR/Terraform_Infra/vars.yml
+#   # tags:
+#   #   - build_job_docker
 
   
-hydrate_db:
-  stage: provision
-  # image: python:3.9.17-slim-bullseye
-  before_script:
-    - export AWS_PROFILE=aws_profile
-    - export AWS_REGION=$AWS_REGION
-    - export ANSIBLE_CONFIG=ansible.cfg
-  script:
-    - aws sts get-caller-identity
-    - ansible --version
-    - ansible -m ping all
-    - ansible-inventory --list
-    - ansible-inventory --graph
-    - ansible-playbook -i Ansible/inventory.ini Ansible/playbook.yml -e "@$CI_PROJECT_DIR/Terraform_Infra/vars.yml" # -e key_path=.docker/config.json -e "@vars.env" -e "node_config_file=config.yaml"
-  needs:
-    - job: deploy_db
-      artifacts: true
-  # when: manual
+# hydrate_db:
+#   stage: provision
+#   # image: python:3.9.17-slim-bullseye
+#   before_script:
+#     - export AWS_PROFILE=aws_profile
+#     - export AWS_REGION=$AWS_REGION
+#     - export ANSIBLE_CONFIG=ansible.cfg
+#   script:
+#     - aws sts get-caller-identity
+#     - ansible --version
+#     - ansible -m ping all
+#     - ansible-inventory --list
+#     - ansible-inventory --graph
+#     - ansible-playbook -i Ansible/inventory.ini Ansible/playbook.yml -e "@$CI_PROJECT_DIR/Terraform_Infra/vars.yml" # -e key_path=.docker/config.json -e "@vars.env" -e "node_config_file=config.yaml"
+#   needs:
+#     - job: deploy_db
+#       artifacts: true
+#   when: manual
 
 deploy_stock_app:
   stage: provision
@@ -181,58 +181,57 @@ deploy_stock_app:
     - chmod +x /usr/local/bin/yq
   script:
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-    - |
-      cat <<EOF > gitlab_secret.yml
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: gitlab-cred
-        namespace: default
-      data:
-        .dockerconfigjson: $(cat .docker/config.json | base64 -w 0)
-      type: kubernetes.io/dockerconfigjson
-      EOF
-    - kubectl create -f gitlab_secret.yml --dry-run=client -o yaml | kubectl apply -f -
-    - |
-      cat <<EOF > mysql-service.yml
-      apiVersion: v1
-      kind: Service
-      metadata:
-        labels:
-          app: mysql-service
-        name: mysql-service
-      spec:
-        externalName: $(yq eval '.rds_address.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml)
-        selector:
-          app: mysql-service
-        type: ExternalName
-      status:
-        loadBalancer: {}
-      EOF
-    - kubectl create -f mysql-service.yml --dry-run=client -o yaml | kubectl apply -f -
-    - |
-      cat <<EOF > db_secret.yml
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: db-credentials
-        namespace: default
-      data:
-        DB_USER: $(yq eval '.database_username.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
-        DB_PASSWORD: $(yq eval '.database_password.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
-        RDS_ADDRESS: $(yq eval '.rds_address.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
-        DB_NAME: $(yq eval '.database_name.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
-      EOF
-    - kubectl create -f db_secret.yml --dry-run=client -o yaml | kubectl apply -f -
-    # - python3 db_secret.py
-    - kubectl create -f deployment_stock.yml --dry-run=client -o yaml | kubectl apply -f -
-    - export LB_DNS=$(kubectl get svc $APP_SERVICE_NAME -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+    # - |
+    #   cat <<EOF > gitlab_secret.yml
+    #   apiVersion: v1
+    #   kind: Secret
+    #   metadata:
+    #     name: gitlab-cred
+    #     namespace: default
+    #   data:
+    #     .dockerconfigjson: $(cat .docker/config.json | base64 -w 0)
+    #   type: kubernetes.io/dockerconfigjson
+    #   EOF
+    # - kubectl create -f gitlab_secret.yml --dry-run=client -o yaml | kubectl apply -f -
+    # - |
+    #   cat <<EOF > mysql-service.yml
+    #   apiVersion: v1
+    #   kind: Service
+    #   metadata:
+    #     labels:
+    #       app: mysql-service
+    #     name: mysql-service
+    #   spec:
+    #     externalName: $(yq eval '.rds_address.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml)
+    #     selector:
+    #       app: mysql-service
+    #     type: ExternalName
+    #   status:
+    #     loadBalancer: {}
+    #   EOF
+    # - kubectl create -f mysql-service.yml --dry-run=client -o yaml | kubectl apply -f -
+    # - |
+    #   cat <<EOF > db_secret.yml
+    #   apiVersion: v1
+    #   kind: Secret
+    #   metadata:
+    #     name: db-credentials
+    #     namespace: default
+    #   data:
+    #     DB_USER: $(yq eval '.database_username.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
+    #     DB_PASSWORD: $(yq eval '.database_password.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
+    #     RDS_ADDRESS: $(yq eval '.rds_address.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
+    #     DB_NAME: $(yq eval '.database_name.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
+    #   EOF
+    # - kubectl create -f db_secret.yml --dry-run=client -o yaml | kubectl apply -f -
+    # - kubectl create -f deployment_stock.yml --dry-run=client -o yaml | kubectl apply -f -
+    - export LB_DNS=$(kubectl get ingress ingress-stock-app -o jsonpath='{.status.loadBalancer.ingress[0].hostname}') > lb_dns.env
     - echo $LB_DNS
   needs:
     - job: deploy_db
       artifacts: true
-    - job: build-docker-image
-      artifacts: true
+    # - job: build-docker-image
+    #   artifacts: true
   artifacts:
     untracked: false
     when: on_success
@@ -318,7 +317,8 @@ locust_loadtest:
     - source lb_dns.env
     - locust -f $CI_PROJECT_DIR/Locust/locustfile.py --headless --users 200 --spawn-rate 10 --run-time 10m --host=http://$LB_DNS
   needs:
-    - deploy_stock_app
+    - job: deploy_stock_app
+      artifacts: true
 
 destroy:
   stage: destroy_infra
