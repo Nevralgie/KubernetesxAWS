@@ -317,7 +317,7 @@ locust_loadtest:
     - locust -f $CI_PROJECT_DIR/Locust/locustfile.py --headless --users 200 --spawn-rate 10 --run-time 10m --host=http://$LB_DNS
   needs:
     - job: deploy_stock_app
-      artifacts: true
+      # artifacts: true
   tags:
     - build_job_docker
 
