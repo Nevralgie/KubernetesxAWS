@@ -9,14 +9,13 @@ variables:
 stages:
   - build
   - deploy
-  - deploy-managed-mysql-database
+  # - deploy-managed-mysql-database
   - provision
-  - deploy_stock_app
-  - ai
+  # - deploy_stock_app
+  # - ai
   - monitor
-  - destroy
   - destroy_infra
-
+  - destroy_cluster
 
 build-docker-image:
   stage: build
@@ -90,7 +89,7 @@ build-docker-image:
 #   # when: manual
 
 
-deploy:
+deploy_eks:
   stage: deploy
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
@@ -124,12 +123,14 @@ deploy:
       artifacts: true
 
 deploy_db:
-  stage: deploy-managed-mysql-database
-  image:
-    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
-    entrypoint:
-      - '/usr/bin/env'
-      - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+  stage: deploy
+  # image:
+  #   name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
+  #   entrypoint:
+  #     - '/usr/bin/env'
+  #     - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+  environment:
+    name: production
   before_script:
     # yq packages needs to be installed on the runner instance
     - export TF_PASSWORD=${GITLAB_ACCESS_TOKEN}
@@ -156,13 +157,11 @@ deploy_db:
     # - echo "DB_NAME=$DB_NAME" >> vars.env
     - cat vars.yml
   needs:
-    - deploy
+    - deploy_eks
   # when: manual
   artifacts:
     paths:
       - vars.yml
-  # needs:
-  #   - job: deploy
   # tags:
   #   - build_job_docker
 
@@ -187,7 +186,7 @@ hydrate_db:
   # when: manual
 
 deploy_stock_app:
-  stage: deploy_stock_app
+  stage: provision
   image: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   before_script:
     - pip install pyyaml
