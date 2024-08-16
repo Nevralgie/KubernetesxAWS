@@ -249,7 +249,7 @@ deploy_stock_app:
     - build_job_docker
 
 deploy_ai:
-  stage: ai
+  stage: provision
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   script:
@@ -344,8 +344,8 @@ monitoring:
     - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom --create-namespace -f $CI_PROJECT_DIR/K8s/manifests/monitoring/values.yml
   tags:
     - build_job_docker
-  # needs:
-  #   - deploy_ai
+  needs:
+    - deploy_eks
   # when: manual
 
 clean:
