@@ -234,7 +234,7 @@ deploy_stock_app:
     #   artifacts: true
   artifacts:
     reports:
-    dotenv: $CI_PROJECT_DIR/lb_dns.env
+      dotenv: $CI_PROJECT_DIR/lb_dns.env
   tags:
     - build_job_docker
 
