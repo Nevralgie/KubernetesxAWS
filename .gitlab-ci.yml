@@ -156,7 +156,7 @@ hydrate_db:
     - ansible -m ping all
     - ansible-inventory --list
     - ansible-inventory --graph
-    - ansible-playbook -i Ansible/inventory.ini Ansible/playbook.yml -e "@vars.yml" # -e key_path=.docker/config.json -e "@vars.env" -e "node_config_file=config.yaml"
+    - ansible-playbook -i Ansible/inventory.ini Ansible/playbook.yml -e "@$CI_PROJECT_DIR/Terraform_Infra/vars.yml" # -e key_path=.docker/config.json -e "@vars.env" -e "node_config_file=config.yaml"
   needs:
     - job: deploy_db
       artifacts: true
@@ -192,7 +192,7 @@ deploy_stock_app:
           app: mysql-service
         name: mysql-service
       spec:
-        externalName: $(yq eval '.rds_address.value' vars.yml)
+        externalName: $(yq eval '.rds_address.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml)
         selector:
           app: mysql-service
         type: ExternalName
@@ -208,10 +208,10 @@ deploy_stock_app:
         name: db-credentials
         namespace: default
       data:
-        DB_USER: $(yq eval '.database_username.value' vars.yml | base64 -w 0)
-        DB_PASSWORD: $(yq eval '.database_password.value' vars.yml | base64 -w 0)
-        RDS_ADDRESS: $(yq eval '.rds_address.value' vars.yml | base64 -w 0)
-        DB_NAME: $(yq eval '.database_name.value' vars.yml | base64 -w 0)
+        DB_USER: $(yq eval '.database_username.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
+        DB_PASSWORD: $(yq eval '.database_password.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
+        RDS_ADDRESS: $(yq eval '.rds_address.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
+        DB_NAME: $(yq eval '.database_name.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
       EOF
     - kubectl create -f db_secret.yml --dry-run=client -o yaml | kubectl apply -f -
     # - python3 db_secret.py
@@ -315,12 +315,32 @@ monitoring:
     #                 number: 80
     #       tls: []
     #   EOF
-    - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom --create-namespace -f $CI_PROJECT_DIR/K8s/manifests/monitoring/values.yml
+    - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom --create-namespace -f $CI_PROJECT_DIR/K8s/manifests/monitoring/values.yml || true
   tags:
     - build_job_docker
   needs:
     - deploy_eks
   when: manual
+
+# Job to fetch the load balancer DNS and store it in a CI variable
+fetch_lb_dns:
+  stage: fetch_dns
+  image: bitnami/kubectl:latest
+  script:
+    - echo "Fetching Load Balancer DNS..."
+    - export LB_DNS=$(kubectl get svc <service-name> -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+    - echo "Load Balancer DNS: $LB_DNS"
+  artifacts:
+    reports:
+      dotenv: lb_dns.env
+
+# Job to run the load test using the DNS fetched in the previous job
+loadtest:
+  stage: loadtest
+  image: locustio/locust
+  script:
+    - source lb_dns.env
+    - locust -f locustfile.py --headless --users 200 --spawn-rate 10 --run-time 10m --host=http://$LB_DNS
 
 destroy:
   stage: destroy_infra
