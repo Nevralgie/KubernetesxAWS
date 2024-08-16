@@ -99,7 +99,7 @@ deploy_eks:
   needs:
     - job: build-docker-image
       artifacts: true
-  when: manual
+  # when: manual
 
 deploy_db:
   stage: deploy
@@ -127,7 +127,6 @@ deploy_db:
     - cat vars.yml
   needs:
     - deploy_eks
-  # when: manual
   artifacts:
     untracked: false
     when: on_success
@@ -135,6 +134,7 @@ deploy_db:
     expire_in: 1 days
     paths:
       - $CI_PROJECT_DIR/Terraform_Infra/vars.yml
+  # when: manual
 
   
 hydrate_db:
@@ -226,6 +226,7 @@ deploy_stock_app:
       - $CI_PROJECT_DIR/lb_dns.env
   tags:
     - build_job_docker
+  # when: manual
 
 deploy_ai:
   stage: provision
@@ -270,9 +271,9 @@ deploy_ai:
       EOF
   tags:
     - build_job_docker
-  # needs:
-  #   - deploy
-  when: manual
+  needs:
+    - deploy_eks
+  # when: manual
 
 monitoring:
   stage: monitor
