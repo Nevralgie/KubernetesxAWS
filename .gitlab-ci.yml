@@ -312,15 +312,17 @@ monitoring:
 # Job to run the load test using the DNS fetched in the previous job
 locust_loadtest:
   stage: loadtest
-  image: python:3.9-slim
-  before_script: 
-    - pip install locust
+  image: locustio/locust
+  before_script:
+    - source lb_dns.env
   script:
     - source lb_dns.env
-    - /home/gitlab-runner/.local/bin/locust -f $CI_PROJECT_DIR/Locust/locustfile.py --headless --users 200 --spawn-rate 10 --run-time 10m --host=http://$LB_DNS
+    - locust -f $CI_PROJECT_DIR/Locust/locustfile.py --headless --users 200 --spawn-rate 10 --run-time 10m --host=http://$LB_DNS
   needs:
     - job: deploy_stock_app
       artifacts: true
+  tags:
+    - build_job_docker
 
 destroy:
   stage: destroy_infra
