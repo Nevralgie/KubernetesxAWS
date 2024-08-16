@@ -18,8 +18,8 @@ img = io.BytesIO()
 stock_names = ['AMZN', 'MSFT']  # Replace with your desired stock symbols
 
 mysql_config = {
-    'user': 'root',
-    'password': 'Devtest01',
+    'user': 'eks_administrator',
+    'password': 'vAdmintest69007v',
     'host': 'mysql',  # Service name in Kubernetes
     'database': 'devdb'
 }

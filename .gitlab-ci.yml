@@ -132,17 +132,19 @@ deploy_db:
       - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
   before_script:
     # yq packages needs to be installed on the runner instance
+    - export TF_PASSWORD=${GITLAB_ACCESS_TOKEN}
     - rm -rf .terraform
     - terraform --version
-    - terraform init
+    - terraform init -backend-config=password=${TF_PASSWORD}
     - VPC_ID=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.resourcesVpcConfig.vpcId" --output text)
     - RTB_ID=$(aws ec2 describe-route-tables --region $AWS_REGION --filters "Name=vpc-id,Values=$VPC_ID" --query "RouteTables[0].RouteTableId" --output text)
   script:
     - echo $VPC_ID
+    - echo $RTB_ID
     - terraform fmt -recursive
     - terraform validate
-    - terraform plan -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" 
-    - terraform apply -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" --auto-approve
+    - terraform plan -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD"
+    - terraform apply -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" --auto-approve
     - terraform output -json | yq eval -P '.' > vars.yml
     # - DB_ENDPOINT=$(terraform output -raw rds_address)
     # - DB_USER=$(terraform output -raw database_username)
@@ -173,7 +175,6 @@ hydrate_db:
     - export AWS_REGION=$AWS_REGION
     - export ANSIBLE_CONFIG=ansible.cfg
   script:
-    - cat ~/.aws/credentials
     - aws sts get-caller-identity
     - ansible --version
     - ansible -m ping all
@@ -193,7 +194,6 @@ deploy_stock_app:
     - wget https://github.com/mikefarah/yq/releases/download/v4.25.1/yq_linux_amd64 -O /usr/local/bin/yq
     - chmod +x /usr/local/bin/yq
   script:
-    # - kubectl create secret generic gitlab-cred --type=kubernetes.io/dockerconfigjson --from-file=.dockerconfigjson=.docker/config.json || echo "Secret already exists"
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
     - |
       cat <<EOF > gitlab_secret.yml
@@ -269,11 +269,10 @@ deploy_ai:
     - kubectl delete crd k8sgpts.core.k8sgpt.ai || true
     - helm uninstall release --namespace k8sgpt-operator-system || true
     - helm install release k8sgpt/k8sgpt-operator -n k8sgpt-operator-system --create-namespace || true
-    - kubectl create -f namespace.yml --dry-run=client -o yaml | kubectl apply -f -
-    - kubectl create -f pvc.yml --dry-run=client -o yaml | kubectl apply -f -
-    - kubectl create -f storageclass.yml --dry-run=client -o yaml | kubectl apply -f -
-    - kubectl create -f deployment.yml --dry-run=client -o yaml | kubectl apply -f -
-    - kubectl create -f service.yml --dry-run=client -o yaml | kubectl apply -f -
+    - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/pvc.yml --dry-run=client -o yaml | kubectl apply -f -
+    - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/storageclass.yml --dry-run=client -o yaml | kubectl apply -f -
+    - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/deployment.yml --dry-run=client -o yaml | kubectl apply -f -
+    - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/service.yml --dry-run=client -o yaml | kubectl apply -f -
     - |
       kubectl apply -f - << EOF
       apiVersion: core.k8sgpt.ai/v1alpha1
@@ -295,7 +294,7 @@ deploy_ai:
     - build_job_docker
   # needs:
   #   - deploy
-  when: manual
+  # when: manual
 
 monitoring:
   stage: monitor
@@ -312,44 +311,43 @@ monitoring:
     - helm repo update eks
     - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
     - helm repo update
-    - kubectl create -f namespace.yml --dry-run=client -o yaml | kubectl apply -f -
-    - |
-      cat <<EOF > values.yaml
-      prometheus:
-        prometheusSpec:
-          serviceMonitorSelectorNilUsesHelmValues: false
-          ruleSelectorNilUsesHelmValues: false
-          podMonitorSelectorNilUsesHelmValues: false
-          probeSelectorNilUsesHelmValues: false
-      grafana:
-        enabled: true
-        adminPassword: Azurev69007
-        service:
-          type: ClusterIP
-          port: 80
-          targetPort: 3000
-        ingress:
-          enabled: true
-          ingressClassName: alb
-          annotations:
-            alb.ingress.kubernetes.io/scheme: internet-facing
-            alb.ingress.kubernetes.io/target-type: ip
-          paths:
-            - path: /
-              pathType: Prefix
-              backend:
-                service:
-                  name: kube-prometheus-stack-grafana
-                  port:
-                    number: 80
-          tls: []
-      EOF
-    - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom --create-namespace -f values.yaml
+    # - |
+    #   cat <<EOF > values.yaml
+    #   prometheus:
+    #     prometheusSpec:
+    #       serviceMonitorSelectorNilUsesHelmValues: false
+    #       ruleSelectorNilUsesHelmValues: false
+    #       podMonitorSelectorNilUsesHelmValues: false
+    #       probeSelectorNilUsesHelmValues: false
+    #   grafana:
+    #     enabled: true
+    #     adminPassword: Azurev69007
+    #     service:
+    #       type: ClusterIP
+    #       port: 80
+    #       targetPort: 3000
+    #     ingress:
+    #       enabled: true
+    #       ingressClassName: alb
+    #       annotations:
+    #         alb.ingress.kubernetes.io/scheme: internet-facing
+    #         alb.ingress.kubernetes.io/target-type: ip
+    #       paths:
+    #         - path: /
+    #           pathType: Prefix
+    #           backend:
+    #             service:
+    #               name: kube-prometheus-stack-grafana
+    #               port:
+    #                 number: 80
+    #       tls: []
+    #   EOF
+    - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom --create-namespace -f $CI_PROJECT_DIR/K8s/manifests/monitoring/values.yml
   tags:
     - build_job_docker
   # needs:
   #   - deploy_ai
-  when: manual
+  # when: manual
 
 clean:
   stage: destroy
@@ -377,7 +375,7 @@ destroy:
     - RTB_ID=$(aws ec2 describe-route-tables --region $AWS_REGION --filters "Name=vpc-id,Values=$VPC_ID" --query "RouteTables[0].RouteTableId" --output text)
     - terraform init -backend-config=password=${TF_PASSWORD}
   script:
-    - terraform destroy -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" --auto-approve
+    - terraform destroy -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" --auto-approve
   when: manual
   tags:
     - build_job_docker
