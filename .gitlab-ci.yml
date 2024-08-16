@@ -320,7 +320,7 @@ monitoring:
     - build_job_docker
   needs:
     - deploy_eks
-  # when: manual
+  when: manual
 
 destroy:
   stage: destroy_infra
