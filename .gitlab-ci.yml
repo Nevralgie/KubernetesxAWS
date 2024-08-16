@@ -225,16 +225,21 @@ deploy_stock_app:
     #   EOF
     # - kubectl create -f db_secret.yml --dry-run=client -o yaml | kubectl apply -f -
     # - kubectl create -f deployment_stock.yml --dry-run=client -o yaml | kubectl apply -f -
-    - export LB_DNS=$(kubectl get ingress ingress-stock-app -o jsonpath='{.status.loadBalancer.ingress[0].hostname}') > lb_dns.env
-    - echo $LB_DNS
+    - echo "DB_ENDPOINT=$DB_ENDPOINT" > vars.env
+    - echo LB_DNS=$(kubectl get ingress ingress-stock-app -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+    - echo "LB_DNS=$LB_DNS" > lb_dns.env
   # needs:
   #   - job: deploy_db
   #     artifacts: true
     # - job: build-docker-image
     #   artifacts: true
   artifacts:
-    reports:
-      dotenv: $CI_PROJECT_DIR/lb_dns.env
+    untracked: false
+    when: on_success
+    access: developer
+    expire_in: 1 days
+    paths:
+      - $CI_PROJECT_DIR/lb_dns.env
   tags:
     - build_job_docker
 
@@ -311,13 +316,12 @@ locust_loadtest:
   image: python:3.9-slim
   before_script: 
     - pip install locust
-    - ls
   script:
     - source lb_dns.env
     - locust -f $CI_PROJECT_DIR/Locust/locustfile.py --headless --users 200 --spawn-rate 10 --run-time 10m --host=http://$LB_DNS
   needs:
     - job: deploy_stock_app
-      # artifacts: true
+      artifacts: true
   tags:
     - build_job_docker
 
