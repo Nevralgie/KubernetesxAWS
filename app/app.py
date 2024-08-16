@@ -20,8 +20,8 @@ stock_names = ['AMZN', 'MSFT']  # Replace with your desired stock symbols
 mysql_config = {
     'user': 'eks_administrator',
     'password': 'vAdmintest69007v',
-    'host': 'mysql',  # Service name in Kubernetes
-    'database': 'devdb'
+    'host': 'mysql-service',  # Service name in Kubernetes
+    'database': 'db_app'
 }
 
 def fetch_data(stock_name):
