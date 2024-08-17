@@ -20,8 +20,8 @@ stock_names = ['AMZN', 'MSFT']  # Replace with your desired stock symbols
 # Load database credentials from environment variables
 def get_db_connection():
     return mysql.connector.connect(
-        user='admin',
-        password='vAdmintestv',
+        user='eks_administrator',
+        password='vAdmintest69007v',
         host='mysql-service',
         database='db_app',
     )
