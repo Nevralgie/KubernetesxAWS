@@ -16,58 +16,58 @@ stages:
   - destroy_infra
   - destroy_cluster
 
-# build-docker-image:
-#   stage: build
-#   image: 
-#     name: docker:24.0.5
-#   services:
-#     - docker:dind
-#   variables: 
-#     DOCKER_DRIVER: overlay2
-#     DOCKER_TLS_CERTDIR: ""
-#   before_script:
-#     # Connection to the gitlab Registry
-#     - echo "$PULL_PAT_TOKEN" | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin
-#     # Create a separate docker network for testing
-#     - docker network create test_env
-#   script:
-#     # Build a first test image
-#     # Unit tests are integrated into the Dockerfile build
-#     - docker build --target build -t $CI_REGISTRY/$DOCKER_IMAGE:test ./app
-#     # Run the container on the test network to copy the report.xml - Result report of the unit tests
-#     - docker run -d --name test_app_cont --hostname stock_analysis --network test_env -p 5000:5000 $CI_REGISTRY/$DOCKER_IMAGE:test
-#     # Wait for container to spin-up before attempting to copy the targeted content
-#     - sleep 5
-#     - docker cp test_app_cont:/app/report.xml $CI_PROJECT_DIR/report.xml
-#     # Remove useless container
-#     - docker rm -f test_app_cont
-#     # Build the release candidate image for Owasp testing
-#     - docker build --target production -t $CI_REGISTRY/nevii/terraform_eks/$DOCKER_IMAGE:vprod1.0 ./app
-#     # Run the release candidate image for Owasp testing
-#     - docker run -d --name test_app_cont --hostname stock_analysis --network test_env -p 5000:5000 $CI_REGISTRY/nevii/terraform_eks/$DOCKER_IMAGE:vprod1.0
-#     # Make sure the rc container is up and running as expected
-#     - until docker run --network test_env --rm curlimages/curl curl http://stock_analysis:5000; do echo "Waiting for app to start..."; sleep 5; done
-#     # logout to pull image from public docker registry
-#     - docker logout
-#     # Run the owasp container with the automation framework symlinked to the stock_analysis_zap.yml template in repo
-#     - docker run --rm --name owaspzap --network test_env -v $(pwd):/zap/reports/:rw -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable bash -c "zap.sh -cmd -addonupdate; zap.sh -cmd -quickurl http://stock_analysis:5000 -autorun /zap/wrk/stock_analysis_zap.yml"
-#     # Login again to our Gitlab container registry to push the rc image there
-#     - echo "$PULL_PAT_TOKEN" | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin
-#     - docker push $CI_REGISTRY/nevii/terraform_eks/$DOCKER_IMAGE:vprod1.0
-#   tags:
-#     - build_job_docker
-#   artifacts:
-#     # Store the needed results of the Job
-#     untracked: false
-#     when: on_success
-#     access: developer
-#     expire_in: 30 days
-#     name: "build_and_reports"
-#     paths:
-#       - ./app
-#       - combinedHtmlReport.html
-#       - report.xml
-#       - .docker/config.json
+build-docker-image:
+  stage: build
+  image: 
+    name: docker:24.0.5
+  services:
+    - docker:dind
+  variables: 
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    # Connection to the gitlab Registry
+    - echo "$PULL_PAT_TOKEN" | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin
+    # Create a separate docker network for testing
+    - docker network create test_env
+  script:
+    # Build a first test image
+    # Unit tests are integrated into the Dockerfile build
+    - docker build --target build -t $CI_REGISTRY/$DOCKER_IMAGE:test ./app
+    # Run the container on the test network to copy the report.xml - Result report of the unit tests
+    - docker run -d --name test_app_cont --hostname stock_analysis --network test_env -p 5000:5000 $CI_REGISTRY/$DOCKER_IMAGE:test
+    # Wait for container to spin-up before attempting to copy the targeted content
+    - sleep 5
+    - docker cp test_app_cont:/app/report.xml $CI_PROJECT_DIR/report.xml
+    # Remove useless container
+    - docker rm -f test_app_cont
+    # Build the release candidate image for Owasp testing
+    - docker build --target production -t $CI_REGISTRY/nevii/terraform_eks/$DOCKER_IMAGE:vprod1.0 ./app
+    # Run the release candidate image for Owasp testing
+    - docker run -d --name test_app_cont --hostname stock_analysis --network test_env -p 5000:5000 $CI_REGISTRY/nevii/terraform_eks/$DOCKER_IMAGE:vprod1.0
+    # Make sure the rc container is up and running as expected
+    - until docker run --network test_env --rm curlimages/curl curl http://stock_analysis:5000; do echo "Waiting for app to start..."; sleep 5; done
+    # logout to pull image from public docker registry
+    - docker logout
+    # Run the owasp container with the automation framework symlinked to the stock_analysis_zap.yml template in repo
+    - docker run --rm --name owaspzap --network test_env -v $(pwd):/zap/reports/:rw -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable bash -c "zap.sh -cmd -addonupdate; zap.sh -cmd -quickurl http://stock_analysis:5000 -autorun /zap/wrk/stock_analysis_zap.yml"
+    # Login again to our Gitlab container registry to push the rc image there
+    - echo "$PULL_PAT_TOKEN" | docker login -u "$CI_REGISTRY_USER" $CI_REGISTRY --password-stdin
+    - docker push $CI_REGISTRY/nevii/terraform_eks/$DOCKER_IMAGE:vprod1.0
+  tags:
+    - build_job_docker
+  artifacts:
+    # Store the needed results of the Job
+    untracked: false
+    when: on_success
+    access: developer
+    expire_in: 30 days
+    name: "build_and_reports"
+    paths:
+      - ./app
+      - combinedHtmlReport.html
+      - report.xml
+      - .docker/config.json
 
 # deploy_eks:
 #   stage: deploy
@@ -219,8 +219,8 @@ deploy_stock_app:
   needs:
     - job: deploy_db
       artifacts: true
-    # - job: build-docker-image
-    #   artifacts: true
+    - job: build-docker-image
+      artifacts: true
   artifacts:
     untracked: false
     when: on_success
