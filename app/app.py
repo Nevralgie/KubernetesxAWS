@@ -17,24 +17,27 @@ img = io.BytesIO()
 # Define the stock names
 stock_names = ['AMZN', 'MSFT']  # Replace with your desired stock symbols
 
-mysql_config = {
-    'user': 'eks_administrator',
-    'password': 'vAdmintest69007v',
-    'host': 'mysql-service',  # Service name in Kubernetes
-    'database': 'db_app'
-}
+# Load database credentials from environment variables
+def get_db_connection():
+    return mysql.connector.connect(
+        user='admin',
+        password='vAdmintestv',
+        host='mysql-service',
+        database='db_app',
+    )
+
 
 def fetch_data(stock_name):
     # Fetch data from MySQL database
-    conn = mysql.connector.connect(**mysql_config)
-    cursor = conn.cursor()
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
 
     query = f"""
-    SELECT Date, Open, High, Low, Close, AdjClose, Volume
-    FROM stock_data
-    WHERE StockName = %s
-    ORDER BY Date DESC
-    LIMIT 100
+        SELECT Date, Open, High, Low, Close, AdjClose, Volume
+        FROM stock_data
+        WHERE StockName = %s
+        ORDER BY Date DESC
+        LIMIT 100
     """
     cursor.execute(query, (stock_name,))
     rows = cursor.fetchall()
@@ -46,7 +49,6 @@ def fetch_data(stock_name):
     cursor.close()
     conn.close()
     return data
-    pass
 
 def analyze_data(data,stock_name):
     # Perform stock market analysis on the data
