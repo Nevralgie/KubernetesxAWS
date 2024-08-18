@@ -154,11 +154,11 @@ hydrate_db:
     - export ANSIBLE_CONFIG=ansible.cfg
   script:
     - aws sts get-caller-identity
-    - ansible --version
-    - ansible -m ping all
-    - ansible-inventory --list
-    - ansible-inventory --graph
-    - ansible-playbook -i Ansible/inventory.ini Ansible/playbook.yml -e "@$CI_PROJECT_DIR/Terraform_Infra/vars.yml" # -e key_path=.docker/config.json -e "@vars.env" -e "node_config_file=config.yaml"
+    # - ansible --version
+    # - ansible -m ping all
+    # - ansible-inventory --list
+    # - ansible-inventory --graph
+    # - ansible-playbook -i Ansible/inventory.ini Ansible/playbook.yml -e "@$CI_PROJECT_DIR/Terraform_Infra/vars.yml" # -e key_path=.docker/config.json -e "@vars.env" -e "node_config_file=config.yaml"
   needs:
     - job: deploy_db
       artifacts: true
