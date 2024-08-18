@@ -159,7 +159,7 @@ hydrate_db:
   needs:
     - job: deploy_db
       artifacts: true
-  when: manual
+  # when: manual
 
 deploy_stock_app:
   stage: provision
@@ -214,7 +214,6 @@ deploy_stock_app:
       EOF
     - kubectl create -f db_secret.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/stock_analysis_app/deployment_stock.yml --dry-run=client -o yaml | kubectl apply -f -
-    - sleep 300
     - LB_DNS=$(kubectl get ingress ingress-stock-app -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
     - echo "LB_DNS=$LB_DNS" > lb_dns.env
     - cat lb_dns.env
@@ -277,9 +276,9 @@ deploy_ai:
       EOF
   tags:
     - build_job_docker
-  # needs:
-  #   - deploy_eks
-  when: manual
+  needs:
+    - deploy_eks
+  # when: manual
 
 monitoring:
   stage: monitor
@@ -297,8 +296,8 @@ monitoring:
     - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom --create-namespace -f $CI_PROJECT_DIR/K8s/manifests/monitoring/values.yml || true
   tags:
     - build_job_docker
-  # needs:
-  #   - deploy_eks
+  needs:
+    - deploy_eks
   when: manual
 
 # Job to run the load test using the DNS fetched in the previous job
@@ -308,11 +307,13 @@ locust_loadtest:
   before_script: 
     - pip install locust
   script:
+    - sleep 150
     - source lb_dns.env
     - locust -f $CI_PROJECT_DIR/Locust/locustfile.py --headless --users 100 --spawn-rate 10 --run-time 5m --host=http://$LB_DNS
   needs:
     - job: deploy_stock_app
       artifacts: true
+    - job: monitoring
   tags:
     - build_job_docker
 
