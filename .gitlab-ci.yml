@@ -13,7 +13,7 @@ stages:
   - deploy
   - provision
   - monitor
-  - loadtest
+  - infra_test
   - destroy_infra
   - destroy_cluster
 
@@ -179,7 +179,7 @@ hydrate_db:
     - ansible-inventory --list
     - ansible-inventory --graph
     # Execute the playbook Ansible, use the artifacts from previous job to successfully log into the database
-    - ansible-playbook -i @$CI_PROJECT_DIR/Ansible/inventory.ini @$CI_PROJECT_DIR/Ansible/playbook.yml -e "@$CI_PROJECT_DIR/Terraform_Infra/vars.yml"
+    - ansible-playbook -i Ansible/inventory.ini Ansible/playbook.yml -e "@$CI_PROJECT_DIR/Terraform_Infra/vars.yml"
   needs:
     # Depends on the RDS deploy job and it's artifact for identifying to the database
     - job: deploy_db
@@ -321,7 +321,7 @@ deploy_ai:
           baseUrl: http://service-local-ai.k8sgpt-operator-system.svc.cluster.local:8080/v1
         noCache: false
         repository: ghcr.io/k8sgpt-ai/k8sgpt
-        version: v0.3.8
+        version: v0.3.40
       EOF
   # Target the docker gitlab instance
   tags:
@@ -358,7 +358,7 @@ monitoring:
 
 # Job to run the load test using the DNS fetched in the previous job
 locust_loadtest:
-  stage: loadtest
+  stage: infra_test
   image: python:3.9-slim
   before_script: 
     # Add & Install locust packages from the python library
@@ -376,6 +376,30 @@ locust_loadtest:
   # Target the docker gitlab instance
   tags:
     - build_job_docker
+
+k8sgpt_gpt_analyzer: 
+  stage: monitor
+  image:
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
+  script:
+    # Make sur you are authentified to aws account with access to EKS endpoint
+    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+    - aws configure set region $AWS_REGION
+    # Set the EKS cluster endpoint as target for kubectl commands
+    - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+    # - helm repo add eks https://aws.github.io/eks-charts
+    # - helm repo update eks
+    # Add & Install the PrometheusxGrafana stack with Helm
+    - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    - helm repo update
+    - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom --create-namespace -f $CI_PROJECT_DIR/K8s/manifests/monitoring/values.yml || true
+    # Target the docker gitlab instance
+  tags:
+    - build_job_docker
+  needs:
+    # Job dependency
+    - deploy_ai
 
 destroy:
   stage: destroy_infra
