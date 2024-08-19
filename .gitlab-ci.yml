@@ -302,23 +302,23 @@ deploy_ai:
     - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/deployment.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/service.yml --dry-run=client -o yaml | kubectl apply -f -
     # Create the crd for the k8sgpt operator 
-    # - |
-    #   kubectl apply -f - << EOF
-    #   apiVersion: core.k8sgpt.ai/v1alpha1
-    #   kind: K8sGPT
-    #   metadata:
-    #     name: k8sgpt-local-ai
-    #     namespace: k8sgpt-operator-system
-    #   spec:
-    #     ai:
-    #       enabled: true
-    #       model: open-llama-13b-open-instruct.ggmlv3.q3_K_M.bin
-    #       backend: localai
-    #       baseUrl: http://service-local-ai.k8sgpt-operator-system.svc.cluster.local:8080/v1
-    #     noCache: false
-    #     repository: ghcr.io/k8sgpt-ai/k8sgpt
-    #     version: v0.3.40
-    #   EOF
+    - |
+      kubectl apply -f - << EOF
+      apiVersion: core.k8sgpt.ai/v1alpha1
+      kind: K8sGPT
+      metadata:
+        name: k8sgpt-local-ai
+        namespace: k8sgpt-operator-system
+      spec:
+        ai:
+          enabled: true
+          model: gpt-3.5-turbo
+          backend: localai
+          baseUrl: http://service-local-ai.k8sgpt-operator-system.svc.cluster.local:8080/v1
+        noCache: false
+        repository: ghcr.io/k8sgpt-ai/k8sgpt
+        version: v0.3.40
+      EOF
   # Target the docker gitlab instance
   tags:
     - build_job_docker
