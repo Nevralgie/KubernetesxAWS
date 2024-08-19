@@ -58,7 +58,7 @@ build-docker-image:
   tags:
     - build_job_docker
   artifacts:
-    # Store the needed results of the Job
+    # Export the output as an artifact with 30 days retention, only viewable by dev on the project
     untracked: false
     when: on_success
     access: developer
@@ -75,29 +75,40 @@ deploy_eks:
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   environment:
-    name: production
+    name: pre-production
   script:
+    # Set your AWS credentials for aws cli login
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
+    # Create EKS cluster
     - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --node-type t2.2xlarge --nodes $NODE_COUNT --alb-ingress-access --node-private-networking --vpc-nat-mode Single || true
-    # Recreate the Load Balancer policy
+    # Recreate the Load Balancer policy if needed
     # # - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
     # # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
+    # Update current client to use the API of or EKS cluster
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+    # Create and associate an iam oidc identity provider. Enable managed identity for nodes and pods, needed for plugin deployment 
     - eksctl utils associate-iam-oidc-provider --cluster=$EKS_CLUSTER_NAME --approve || true
+    # Create access entry, authentication mode for Kubernetes API endpoint cluster authentication. Define the service principal to use
     - aws eks create-access-entry --cluster-name $EKS_CLUSTER_NAME --principal-arn arn:aws:iam::$ACCOUNT_ID:root --type STANDARD --username admin_eks || true
+    # Create the access policy for EKS cluster so it is authorized to interact with AWS resources
     - aws eks associate-access-policy --cluster-name $EKS_CLUSTER_NAME  --principal-arn arn:aws:iam::$ACCOUNT_ID:root --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy --access-scope type=cluster || true
+    # Create the service account for managing the ALB through kubernetes objects
     - eksctl create iamserviceaccount --cluster=$EKS_CLUSTER_NAME --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::$ACCOUNT_ID:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
-    - eksctl create addon --cluster $EKS_CLUSTER_NAME --name vpc-cni --version latest --force # Necessary for aws load balancer controller
-    - eksctl create addon --name aws-ebs-csi-driver --cluster $EKS_CLUSTER_NAME --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy --force # --service-account-role-arn arn:aws:organizations::577409777403:account/o-leoggup8v8/577409777403
+    # Create CNI addon, necessary for the aws load balancer controller
+    - eksctl create addon --cluster $EKS_CLUSTER_NAME --name vpc-cni --version latest --force
+    # Create EBS csi driver addon, need to provision a managed EBS volume for deploying the LLM
+    - eksctl create addon --name aws-ebs-csi-driver --cluster $EKS_CLUSTER_NAME --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy --force
+    # Add & Install load balancer controller with Helm through eks repo, using previously created service account
     - helm repo add eks https://aws.github.io/eks-charts
     - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller || true
-    # - sleep 10 # aws-load-balancer-webhook-service needs time to be up and running, or else next line will fail
-    # - kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/examples/2048/2048_full.yaml
+    - sleep 10 # aws-load-balancer-webhook-service needs time to be up and running
   tags:
+    # Target the docker gitlab instance
     - build_job_docker
   needs:
+    # Import artefact form build job
     - job: build-docker-image
       artifacts: true
 # # #   # when: manual
@@ -107,31 +118,36 @@ deploy_db:
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   environment:
-    name: production
+    name: pre-production
   before_script:
     # yq packages needs to be installed on the runner instance
     - wget https://github.com/mikefarah/yq/releases/download/v4.25.1/yq_linux_amd64 -O /usr/local/bin/yq
     - chmod +x /usr/local/bin/yq
     - export TF_PASSWORD=${GITLAB_ACCESS_TOKEN}
+    # Switch working directory to tf files locations
     - cd $CI_PROJECT_DIR/Terraform_Infra
     - rm -rf .terraform
     - terraform --version
+    # Authenticate to Gitlab State management
     - terraform init -backend-config=password=${TF_PASSWORD}
+    # Get the eks cluster vpc id and the route table
+    # The vpc is needed to deploy the RDS db and the route table to make sure the cluster subnets and the database subnet can communicate
     - VPC_ID=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.resourcesVpcConfig.vpcId" --output text)
     - RTB_ID=$(aws ec2 describe-route-tables --region $AWS_REGION --filters "Name=vpc-id,Values=$VPC_ID" --query "RouteTables[?Associations[?Main==\`true\`]].RouteTableId" --output text)
   script:
-    - echo $VPC_ID
-    - echo $RTB_ID
     - terraform fmt -recursive
     - terraform validate
+    # Supply needed secrets from Gitlab var repository
+    # Deploy the RDS instance and update the network configuration with terraform
     - terraform plan -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD"
     - terraform apply -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" --auto-approve
+    # Convert the output into yaml to be usable easier by k8s
     - terraform output -json | yq eval -P '.' > vars.yml
-    # - DB_ENDPOINT=$(terraform output -raw rds_address)
-    # - echo "DB_ENDPOINT=$DB_ENDPOINT" > vars.env
     - cat vars.yml
   needs:
+    # Depends on EKS job
     - deploy_eks
+    # Export the output as an artifact with 1 day retention, only viewable by dev on the project
   artifacts:
     untracked: false
     when: on_success
@@ -139,6 +155,7 @@ deploy_db:
     expire_in: 1 days
     paths:
       - $CI_PROJECT_DIR/Terraform_Infra/vars.yml
+    # Target the docker gitlab instance
   tags:
     - build_job_docker
 #   # when: manual
@@ -148,17 +165,23 @@ hydrate_db:
   stage: provision
   # image: python:3.9.17-slim-bullseye
   before_script:
+    # Export credentials (optional if the dev pipeline has been launched before)
     - export AWS_PROFILE=aws_profile
     - export AWS_REGION=$AWS_REGION
+    # Export ansible.cfg as Ansible config file
     - export ANSIBLE_CONFIG=ansible.cfg
   script:
+    # Make sure you are authentified to AWS 
     - aws sts get-caller-identity
     - ansible --version
+    # verify that the target in inventory is reachable
     - ansible -m ping all
     - ansible-inventory --list
     - ansible-inventory --graph
-    - ansible-playbook -i Ansible/inventory.ini Ansible/playbook.yml -e "@$CI_PROJECT_DIR/Terraform_Infra/vars.yml" # -e key_path=.docker/config.json -e "@vars.env" -e "node_config_file=config.yaml"
+    # Execute the playbook Ansible, use the artifacts from previous job to successfully log into the database
+    - ansible-playbook -i @$CI_PROJECT_DIR/Ansible/inventory.ini @$CI_PROJECT_DIR/Ansible/playbook.yml -e "@$CI_PROJECT_DIR/Terraform_Infra/vars.yml"
   needs:
+    # Depends on the RDS deploy job and it's artifact for identifying to the database
     - job: deploy_db
       artifacts: true
   # when: manual
@@ -167,11 +190,15 @@ deploy_stock_app:
   stage: provision
   image: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   before_script:
+    # Install the necessary packages to use the exported yaml artifacts values in the files
     - pip install pyyaml
     - wget https://github.com/mikefarah/yq/releases/download/v4.25.1/yq_linux_amd64 -O /usr/local/bin/yq
     - chmod +x /usr/local/bin/yq
   script:
+    # Set the cluster endpoint as target for kubectl commands
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+    # Use the artifact from build job to authenticate to the Gitlab container registry and pull the docker image built
+    # The extracted values will be used to create a kubernetes secret
     - |
       cat <<EOF > gitlab_secret.yml
       apiVersion: v1
@@ -184,6 +211,8 @@ deploy_stock_app:
       type: kubernetes.io/dockerconfigjson
       EOF
     - kubectl create -f gitlab_secret.yml --dry-run=client -o yaml | kubectl apply -f -
+    # Create a service in the cluster for communicating with the RDS instance
+    # The rds dns adress extracted form the deploy db job will be used
     - |
       cat <<EOF > mysql-service.yml
       apiVersion: v1
@@ -200,6 +229,8 @@ deploy_stock_app:
       status:
         loadBalancer: {}
       EOF
+    # Create a secret to be used for the app authentication toward the RDS instance
+    # The values used will be extracted from the deploy db job
     - kubectl create -f mysql-service.yml --dry-run=client -o yaml | kubectl apply -f -
     - |
       cat <<EOF > db_secret.yml
@@ -215,16 +246,22 @@ deploy_stock_app:
         DB_NAME: $(yq eval '.database_name.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
       EOF
     - kubectl create -f db_secret.yml --dry-run=client -o yaml | kubectl apply -f -
+    # Deploy the application using a deployment manifest. A service and an Ingress are also defined 
     - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/stock_analysis_app/deployment_stock.yml --dry-run=client -o yaml | kubectl apply -f -
-    - LB_DNS=$(kubectl get ingress ingress-stock-app -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+    # Make sure the dns name is associated and the LB is up and running before extracting the dns adress into as environment variable into a file
     - sleep 300
+    # Extract and store the ALB DNS adress value
+    - LB_DNS=$(kubectl get ingress ingress-stock-app -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
     - echo "LB_DNS=$LB_DNS" > lb_dns.env
+    # Make sure the key:value is correclty registered
     - cat lb_dns.env
   needs:
+    # Job dependency, with artifact import enabled from them
     - job: deploy_db
       artifacts: true
     - job: build-docker-image
       artifacts: true
+    # Export the output as an artifact with 1 day retention, only viewable by dev on the project
   artifacts:
     untracked: false
     when: on_success
@@ -232,6 +269,7 @@ deploy_stock_app:
     expire_in: 1 days
     paths:
       - $CI_PROJECT_DIR/lb_dns.env
+  # Target the docker gitlab instance
   tags:
     - build_job_docker
   # when: manual
@@ -241,25 +279,33 @@ deploy_ai:
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   script:
+    # Make sur you are authentified to aws account with access to EKS endpoint
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
+    # Set the EKS cluster endpoint as target for kubectl commands
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-    - helm repo add eks https://aws.github.io/eks-charts
-    - helm repo update eks
-    - helm repo update
-    - curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.37/k8sgpt_amd64.deb
-    - dpkg -i k8sgpt_amd64.deb
+    # # - helm repo add eks https://aws.github.io/eks-charts
+    # # - helm repo update eks
+    # # - helm repo update
+    # - curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.37/k8sgpt_amd64.deb
+    # - dpkg -i k8sgpt_amd64.deb
+    # Add & install k8sgpt packages with Hekm
     - helm repo add k8sgpt https://charts.k8sgpt.ai/
     - helm repo update
+    # Verify adding of k8sgpt packages
     - helm list --all-namespaces
-    - kubectl delete crd k8sgpts.core.k8sgpt.ai || true
-    - helm uninstall release --namespace k8sgpt-operator-system || true
+    # # For maintenance purposes, crd of k8sgpt need to be removed before attempting to update
+    # - kubectl delete crd k8sgpts.core.k8sgpt.ai || true
+    # - helm uninstall release --namespace k8sgpt-operator-system || true
+    # Install k8sgpt package release
     - helm install release k8sgpt/k8sgpt-operator -n k8sgpt-operator-system --create-namespace || true
+    # Deploy local-AI image and the LLM model with needed resources
     - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/pvc.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/storageclass.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/deployment.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/service.yml --dry-run=client -o yaml | kubectl apply -f -
+    # Create the crd for the k8sgpt operator 
     - |
       kubectl apply -f - << EOF
       apiVersion: core.k8sgpt.ai/v1alpha1
@@ -277,9 +323,11 @@ deploy_ai:
         repository: ghcr.io/k8sgpt-ai/k8sgpt
         version: v0.3.8
       EOF
+  # Target the docker gitlab instance
   tags:
     - build_job_docker
   needs:
+  # Job dependency
     - deploy_eks
   # when: manual
 
@@ -288,18 +336,23 @@ monitoring:
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   script:
+    # Make sur you are authentified to aws account with access to EKS endpoint
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
+    # Set the EKS cluster endpoint as target for kubectl commands
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-    - helm repo add eks https://aws.github.io/eks-charts
-    - helm repo update eks
+    # - helm repo add eks https://aws.github.io/eks-charts
+    # - helm repo update eks
+    # Add & Install the PrometheusxGrafana stack with Helm
     - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
     - helm repo update
     - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom --create-namespace -f $CI_PROJECT_DIR/K8s/manifests/monitoring/values.yml || true
+    # Target the docker gitlab instance
   tags:
     - build_job_docker
   needs:
+    # Job dependency
     - deploy_eks
   # when: manual
 
@@ -308,14 +361,19 @@ locust_loadtest:
   stage: loadtest
   image: python:3.9-slim
   before_script: 
+    # Add & Install locust packages from the python library
     - pip install locust
   script:
+    # Use the .env file from deploy app job as environment variable source
     - source lb_dns.env
+    # Launch locust load test against extracted alb dns name value - 100 users simulated for 5 minutes requesting the index of the app
     - locust -f $CI_PROJECT_DIR/Locust/locustfile.py --headless --users 100 --spawn-rate 10 --run-time 5m --host=http://$LB_DNS
   needs:
+    # Job dependency, with artifact import enabled from them
     - job: deploy_stock_app
       artifacts: true
     - job: monitoring
+  # Target the docker gitlab instance
   tags:
     - build_job_docker
 
