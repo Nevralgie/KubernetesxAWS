@@ -19,7 +19,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  namespace: default
+  namespace: k8sgpt-operator-system
   name: ingress-local-ai
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
@@ -30,7 +30,7 @@ spec:
     - http:
         paths:
         - path: /
-          pathType: Prefix
+          pathType: ImplementationSpecific
           backend:
             service:
               name: service-local-ai
