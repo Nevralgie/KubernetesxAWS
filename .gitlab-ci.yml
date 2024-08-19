@@ -285,19 +285,16 @@ deploy_ai:
     - aws configure set region $AWS_REGION
     # Set the EKS cluster endpoint as target for kubectl commands
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-    # # - helm repo add eks https://aws.github.io/eks-charts
-    # # - helm repo update eks
-    # # - helm repo update
-    # - curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.37/k8sgpt_amd64.deb
-    # - dpkg -i k8sgpt_amd64.deb
     # Add & install k8sgpt packages with Hekm
     - helm repo add k8sgpt https://charts.k8sgpt.ai/
+    - helm repo add aikit https://sozercan.github.io/aikit/charts || true
     - helm repo update
     # Verify adding of k8sgpt packages
     - helm list --all-namespaces
     # # For maintenance purposes, crd of k8sgpt need to be removed before attempting to update
     # - kubectl delete crd k8sgpts.core.k8sgpt.ai || true
     # - helm uninstall release --namespace k8sgpt-operator-system || true
+    - helm install aikit/aikit --name-template=aikit --namespace=aikit --create-namespace || true
     # Install k8sgpt package release
     - helm install release k8sgpt/k8sgpt-operator -n k8sgpt-operator-system --create-namespace || true
     # Deploy local-AI image and the LLM model with needed resources
@@ -388,8 +385,6 @@ k8sgpt_gpt_analyzer:
     - aws configure set region $AWS_REGION
     # Set the EKS cluster endpoint as target for kubectl commands
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-    # - helm repo add eks https://aws.github.io/eks-charts
-    # - helm repo update eks
     # Add & Install the PrometheusxGrafana stack with Helm
     - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
     - helm repo update
