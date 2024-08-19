@@ -13,26 +13,3 @@ spec:
       port: 8080
       targetPort: 8080
   type: ClusterIP
-
----
-
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  namespace: k8sgpt-operator-system
-  name: ingress-local-ai
-  annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-spec:
-  ingressClassName: alb
-  rules:
-    - http:
-        paths:
-        - path: /
-          pathType: ImplementationSpecific
-          backend:
-            service:
-              name: service-local-ai
-              port:
-                number: 8080
