@@ -292,8 +292,8 @@ deploy_ai:
     # Verify adding of k8sgpt packages
     - helm list --all-namespaces
     # # For maintenance purposes, crd of k8sgpt need to be removed before attempting to update
-    # - kubectl delete crd k8sgpts.core.k8sgpt.ai || true
-    # - helm uninstall release --namespace k8sgpt-operator-system || true
+    - kubectl delete crd k8sgpts.core.k8sgpt.ai || true
+    - helm uninstall release --namespace k8sgpt-operator-system || true
     # Install k8sgpt package release
     - helm install release k8sgpt/k8sgpt-operator -n k8sgpt-operator-system --create-namespace || true
     # Deploy local-AI image and the LLM model with needed resources
