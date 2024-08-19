@@ -322,9 +322,9 @@ deploy_ai:
   # Target the docker gitlab instance
   tags:
     - build_job_docker
-  needs:
-  # Job dependency
-    - deploy_eks
+  # needs:
+  # # Job dependency
+  #   - deploy_eks
   # when: manual
 
 # monitoring:
