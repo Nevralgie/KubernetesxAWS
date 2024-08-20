@@ -326,7 +326,7 @@ deploy_ai:
     #     version: v0.3.40
     #   EOF
     # Create secret from openAI token value
-    - kubectl create secret generic k8sgpt-secret --from-literal=openai-api-key=$OPENAI_TOKEN -n k8sgpt-operator-system
+    - kubectl create secret generic k8sgpt-secret --from-literal=openai-api-key=$OPENAI_TOKEN -n k8sgpt-operator-system || true
     # # Create the cr for the k8sgpt operator
     # # Results of cluster analysis will be available as results resources in the operator namespace
     - |
