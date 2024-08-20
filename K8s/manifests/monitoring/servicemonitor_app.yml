@@ -1,13 +1,13 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: stock-app-app-monitor
+  name: stock-app-monitor
   labels:
     app: stock-app
 spec:
   selector:
     matchLabels:
-      app: stock-app-app
+      app: stock-app
   endpoints:
   - port: http
     path: /metrics
