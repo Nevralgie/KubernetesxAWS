@@ -176,11 +176,11 @@ hydrate_db:
     - aws sts get-caller-identity
     - ansible --version
     # verify that the target in inventory is reachable
-    # - ansible -m ping all
-    # - ansible-inventory --list
-    # - ansible-inventory --graph
-    # # Execute the playbook Ansible, use the artifacts from previous job to successfully log into the database
-    # - ansible-playbook -i Ansible/inventory.ini Ansible/playbook.yml -e "@$CI_PROJECT_DIR/Terraform_Infra/vars.yml"
+    - ansible -m ping all
+    - ansible-inventory --list
+    - ansible-inventory --graph
+    # Execute the playbook Ansible, use the artifacts from previous job to successfully log into the database
+    - ansible-playbook -i Ansible/inventory.ini Ansible/playbook.yml -e "@$CI_PROJECT_DIR/Terraform_Infra/vars.yml"
   needs:
     # Depends on the RDS deploy job and it's artifact for identifying to the database
     - job: deploy_db
@@ -318,11 +318,11 @@ locust_loadtest:
     - source lb_dns.env
     # Launch locust load test against extracted alb dns name value - 100 users simulated for 5 minutes requesting the index of the app
     - locust -f $CI_PROJECT_DIR/Locust/locustfile.py --headless --users 100 --spawn-rate 10 --run-time 5m --host=http://$LB_DNS
-  # needs:
-  #   # Job dependency, with artifact import enabled from them
-  #   - job: deploy_stock_app
-  #     artifacts: true
-  #   - job: monitoring
+  needs:
+    # Job dependency, with artifact import enabled from them
+    - job: deploy_stock_app
+      artifacts: true
+    - job: monitoring
   # Target the docker gitlab instance
   tags:
     - build_job_docker
@@ -384,9 +384,9 @@ deploy_ai_analyzer:
     expire_in: 30 days
     paths:
       - $CI_PROJECT_DIR/k8sresults.json
-  # needs:
-  # # Job dependency
-  #   - deploy_eks
+  needs:
+  # Job dependency
+    - deploy_eks
   # when: manual
 
 
