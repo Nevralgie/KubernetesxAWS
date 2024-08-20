@@ -1,11 +1,6 @@
 prometheus:
   prometheusSpec:
-    additionalScrapeConfigs:
-      - job_name: 'scrape_stock_app'
-        static_configs:
-          - targets: ['service-stock-app-metrics:metrics']
-            labels:
-              app: demo-app
+    serviceMonitorSelectorNilUsesHelmValues: false
 grafana:
   enabled: true
   adminPassword: vxAzurev69007xv
