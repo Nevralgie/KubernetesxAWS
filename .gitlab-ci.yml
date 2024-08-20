@@ -298,8 +298,8 @@ deploy_ai:
     # Verify adding of k8sgpt packages
     - helm list --all-namespaces
     # # For maintenance purposes, crd of k8sgpt need to be removed before attempting to update
-    # - kubectl delete crd k8sgpts.core.k8sgpt.ai || true
-    # - helm uninstall release --namespace k8sgpt-operator-system || true
+    - kubectl delete crd k8sgpts.core.k8sgpt.ai || true
+    - helm uninstall release --namespace k8sgpt-operator-system || true
     # Install k8sgpt package release
     - helm install release k8sgpt/k8sgpt-operator -n k8sgpt-operator-system --create-namespace || true
     # Deploy local-AI image and the LLM model with needed resources
@@ -326,38 +326,37 @@ deploy_ai:
     #     version: v0.3.40
     #   EOF
     # Create secret from openAI token value
-    # - kubectl create secret generic k8sgpt-secret --from-literal=openai-api-key=$OPENAI_TOKEN -n k8sgpt-operator-system
+    - kubectl create secret generic k8sgpt-secret --from-literal=openai-api-key=$OPENAI_TOKEN -n k8sgpt-operator-system
     # # Create the cr for the k8sgpt operator
     # # Results of cluster analysis will be available as results resources in the operator namespace
-    # - |
-    #   kubectl apply -f - << EOF
-    #   apiVersion: core.k8sgpt.ai/v1alpha1
-    #   kind: K8sGPT
-    #   metadata:
-    #     name: k8sgpt
-    #     namespace: k8sgpt-operator-system
-    #   spec:
-    #     ai:
-    #       enabled: true
-    #       model: gpt-4o-mini
-    #       backend: openai
-    #       secret:
-    #         name: k8sgpt-secret
-    #         key: openai-api-key
-    #       # anonymized: false
-    #       # language: english
-    #     noCache: false
-    #     version: v0.3.40
-    #     # filters:
-    #     #   - Ingress
-    #     # sink:
-    #     #   type: slack
-    #     #   webhook: <webhook-url>
-    #     # extraOptions:
-    #     #   backstage:
-    #     #     enabled: true
-    #   EOF
-    # - kubectl get results k8sgpt-operator-system -n -o json | jq .
+    - |
+      kubectl apply -f - << EOF
+      apiVersion: core.k8sgpt.ai/v1alpha1
+      kind: K8sGPT
+      metadata:
+        name: k8sgpt
+        namespace: k8sgpt-operator-system
+      spec:
+        ai:
+          enabled: true
+          model: gpt-4o-mini
+          backend: openai
+          secret:
+            name: k8sgpt-secret
+            key: openai-api-key
+          # anonymized: false
+          # language: english
+        noCache: false
+        version: v0.3.40
+        # filters:
+        #   - Ingress
+        # sink:
+        #   type: slack
+        #   webhook: <webhook-url>
+        # extraOptions:
+        #   backstage:
+        #     enabled: true
+      EOF
     # This loop extracts results from k8sgpt Analyzer 
     - | 
       while true; do
@@ -374,6 +373,7 @@ deploy_ai:
         echo "Resource not available yet, retrying in 5 seconds..."
         sleep 5
       done
+    - echo "$OUTPUT" > k8sresults.json
     # Delete the deployment when results exists
     # OpenAi API does cost around 7e-5 
     # K8sgpt analyses the cluster non stop
@@ -381,6 +381,13 @@ deploy_ai:
   # Target the docker gitlab instance
   tags:
     - build_job_docker
+  artifacts:
+    untracked: false
+    when: on_success
+    access: developer
+    expire_in: 1 days
+    paths:
+      - $CI_PROJECT_DIR/k8sresults.json
   # needs:
   # # Job dependency
   #   - deploy_eks
