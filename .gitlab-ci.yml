@@ -306,7 +306,7 @@ monitoring:
     - build_job_docker
   needs:
     # Job dependency
-    - deploy_eks
+    # - deploy_eks
     - deploy_stock_app
 #   # when: manual
 
