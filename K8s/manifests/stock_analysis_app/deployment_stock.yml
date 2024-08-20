@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: dum-app-container
-          image: registry.gitlab.com/nevii/leverage-your-own-k8s-expert/app_temoin:1.0.3
+          image: registry.gitlab.com/nevii/leverage-your-own-k8s-expert/app_temoin:1.0.4
           env:
           - name: DB_NAME
             valueFrom:
@@ -43,6 +43,10 @@ spec:
               containerPort: 5000  # The port your application is listening on
       imagePullSecrets:
         - name: gitlab-cred
+      volumes:
+      - name: stock-volume
+        persistentVolumeClaim:
+          claimName: stock-pvc
 ---
 apiVersion: v1
 kind: Service

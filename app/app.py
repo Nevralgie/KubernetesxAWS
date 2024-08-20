@@ -14,7 +14,9 @@ REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing requ
 FUNCTION_CALLS = Counter('function_calls_total', 'Total number of function calls')
 REQUEST_LATENCY = Histogram('request_latency_seconds', 'Histogram for the duration in seconds')
 REQUEST_COUNT = Counter('http_req_total', 'HTTP Requests Total')
-
+HTTP_ERROR_COUNT = Counter('http_error_count', 'Total HTTP error responses', ['status_code'])
+EXCEPTION_COUNT = Counter('exception_count', 'Total exceptions encountered')
+DATABASE_ERROR_COUNT = Counter('db_error_count', 'Total database errors')
 
 # Define static folder for css files
 STATIC_DIR = os.path.abspath('./static')
@@ -40,27 +42,32 @@ def get_db_connection():
 
 
 def fetch_data(stock_name):
-    # Fetch data from MySQL database
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    try:
+        # Fetch data from MySQL database
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
 
-    query = f"""
-        SELECT Date, Open, High, Low, Close, AdjClose, Volume
-        FROM stock_data
-        WHERE StockName = %s
-        ORDER BY Date DESC
-        LIMIT 100
-    """
-    cursor.execute(query, (stock_name,))
-    rows = cursor.fetchall()
+        query = f"""
+            SELECT Date, Open, High, Low, Close, AdjClose, Volume
+            FROM stock_data
+            WHERE StockName = %s
+            ORDER BY Date DESC
+            LIMIT 100
+        """
+        cursor.execute(query, (stock_name,))
+        rows = cursor.fetchall()
 
-    # Convert to DataFrame
-    data = pd.DataFrame(rows, columns=['Date', 'Open', 'High', 'Low', 'Close', 'AdjClose', 'Volume'])
-    data.set_index('Date', inplace=True)
+        # Convert to DataFrame
+        data = pd.DataFrame(rows, columns=['Date', 'Open', 'High', 'Low', 'Close', 'AdjClose', 'Volume'])
+        data.set_index('Date', inplace=True)
 
-    cursor.close()
-    conn.close()
-    return data
+        cursor.close()
+        conn.close()
+        return data
+    except mysql.connector.Error as err:
+        DATABASE_ERROR_COUNT.inc()
+        print(f"Database error: {err}")
+        return None
 
 def analyze_data(data,stock_name):
     # Perform stock market analysis on the data
@@ -122,11 +129,26 @@ def index():
     REQUEST_LATENCY.observe(duration)
     return render_template('stock_analysis.html', stock_data=stock_data)
 
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
+
+@app.errorhandler(404)
+def not_found_error(error):
+    HTTP_ERROR_COUNT.labels(status_code=404).inc()
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    HTTP_ERROR_COUNT.labels(status_code=500).inc()
+    return render_template('500.html'), 500
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    EXCEPTION_COUNT.inc()
+    return render_template('error.html'), 500
+
 # Metrics endpoint
 @app.route('/metrics')
 def metrics():
     REQUEST_COUNT.inc()  # Increment the request count each time this endpoint is accessed
     return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
