@@ -281,7 +281,7 @@ stages:
 #     - build_job_docker
 #   # when: manual
 
-deploy_ai:
+deploy_ai_analyzer:
   stage: provision
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
@@ -302,61 +302,39 @@ deploy_ai:
     - helm uninstall release --namespace k8sgpt-operator-system || true
     # Install k8sgpt package release
     - helm install release k8sgpt/k8sgpt-operator -n k8sgpt-operator-system --create-namespace || true
-    # Deploy local-AI image and the LLM model with needed resources
-    # - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/pvc.yml --dry-run=client -o yaml | kubectl apply -f -
-    # - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/storageclass.yml --dry-run=client -o yaml | kubectl apply -f -
-    # - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/deployment.yml --dry-run=client -o yaml | kubectl apply -f -
-    # - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/service.yml --dry-run=client -o yaml | kubectl apply -f -
-    # Create the crd for the k8sgpt operator 
+    # Create secret from openAI token value
+    - kubectl create secret generic k8sgpt-secret --from-literal=openai-api-key=$OPENAI_TOKEN -n k8sgpt-operator-system || true
+    # # Create the cr for the k8sgpt operator
+    # # Results of cluster analysis will be available as results resources in the operator namespace
+    - kubectl apply -f $CI_PROJECT_DIR/K8s/manifests/k8sgpt_cluster_operator/k8sgpt_operator.yml --dry-run=client -o yaml | kubectl apply -f -
     # - |
     #   kubectl apply -f - << EOF
     #   apiVersion: core.k8sgpt.ai/v1alpha1
     #   kind: K8sGPT
     #   metadata:
-    #     name: k8sgpt-local-ai
+    #     name: k8sgpt
     #     namespace: k8sgpt-operator-system
     #   spec:
     #     ai:
     #       enabled: true
-    #       model: open-llama-13b-open-instruct.ggmlv3.q3_K_M.bin
-    #       backend: localai
-    #       baseUrl: http://service-local-ai.k8sgpt-operator-system.svc.cluster.local:8080
+    #       model: gpt-4o-mini
+    #       backend: openai
+    #       secret:
+    #         name: k8sgpt-secret
+    #         key: openai-api-key
+    #       # anonymized: false
+    #       # language: english
     #     noCache: false
-    #     repository: ghcr.io/k8sgpt-ai/k8sgpt
     #     version: v0.3.40
+    #     # filters:
+    #     #   - Ingress
+    #     # sink:
+    #     #   type: slack
+    #     #   webhook: <webhook-url>
+    #     # extraOptions:
+    #     #   backstage:
+    #     #     enabled: true
     #   EOF
-    # Create secret from openAI token value
-    - kubectl create secret generic k8sgpt-secret --from-literal=openai-api-key=$OPENAI_TOKEN -n k8sgpt-operator-system || true
-    # # Create the cr for the k8sgpt operator
-    # # Results of cluster analysis will be available as results resources in the operator namespace
-    - |
-      kubectl apply -f - << EOF
-      apiVersion: core.k8sgpt.ai/v1alpha1
-      kind: K8sGPT
-      metadata:
-        name: k8sgpt
-        namespace: k8sgpt-operator-system
-      spec:
-        ai:
-          enabled: true
-          model: gpt-4o-mini
-          backend: openai
-          secret:
-            name: k8sgpt-secret
-            key: openai-api-key
-          # anonymized: false
-          # language: english
-        noCache: false
-        version: v0.3.40
-        # filters:
-        #   - Ingress
-        # sink:
-        #   type: slack
-        #   webhook: <webhook-url>
-        # extraOptions:
-        #   backstage:
-        #     enabled: true
-      EOF
     # This loop extracts results from k8sgpt Analyzer 
     - | 
       while true; do
@@ -437,27 +415,6 @@ locust_loadtest:
   tags:
     - build_job_docker
 
-# k8sgpt_gpt_analyzer: 
-#   stage: monitor
-#   image:
-#     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
-#   script:
-#     # Make sur you are authentified to aws account with access to EKS endpoint
-#     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-#     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-#     - aws configure set region $AWS_REGION
-#     # Set the EKS cluster endpoint as target for kubectl commands
-#     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-#     # Add & Install the PrometheusxGrafana stack with Helm
-#     - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-#     - helm repo update
-#     - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom --create-namespace -f $CI_PROJECT_DIR/K8s/manifests/monitoring/values.yml || true
-#     # Target the docker gitlab instance
-#   tags:
-#     - build_job_docker
-#   needs:
-#     # Job dependency
-#     - deploy_ai
 
 destroy:
   stage: destroy_infra
