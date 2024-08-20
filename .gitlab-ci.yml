@@ -281,96 +281,6 @@ stages:
 #     - build_job_docker
 #   # when: manual
 
-deploy_ai_analyzer:
-  stage: provision
-  image:
-    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
-  script:
-    # Make sur you are authentified to aws account with access to EKS endpoint
-    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-    - aws configure set region $AWS_REGION
-    # Set the EKS cluster endpoint as target for kubectl commands
-    - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-    # Add & install k8sgpt packages with Hekm
-    - helm repo add k8sgpt https://charts.k8sgpt.ai/ || true
-    - helm repo update
-    # Verify adding of k8sgpt packages
-    - helm list --all-namespaces
-    # # For maintenance purposes, crd of k8sgpt need to be removed before attempting to update
-    - kubectl delete crd k8sgpts.core.k8sgpt.ai || true
-    - helm uninstall release --namespace k8sgpt-operator-system || true
-    # Install k8sgpt package release
-    - helm install release k8sgpt/k8sgpt-operator -n k8sgpt-operator-system --create-namespace || true
-    # Create secret from openAI token value
-    - kubectl create secret generic k8sgpt-secret --from-literal=openai-api-key=$OPENAI_TOKEN -n k8sgpt-operator-system || true
-    # # Create the cr for the k8sgpt operator
-    # # Results of cluster analysis will be available as results resources in the operator namespace
-    - kubectl apply -f $CI_PROJECT_DIR/K8s/manifests/k8sgpt_cluster_operator/k8sgpt_operator.yml --dry-run=client -o yaml | kubectl apply -f -
-    # - |
-    #   kubectl apply -f - << EOF
-    #   apiVersion: core.k8sgpt.ai/v1alpha1
-    #   kind: K8sGPT
-    #   metadata:
-    #     name: k8sgpt
-    #     namespace: k8sgpt-operator-system
-    #   spec:
-    #     ai:
-    #       enabled: true
-    #       model: gpt-4o-mini
-    #       backend: openai
-    #       secret:
-    #         name: k8sgpt-secret
-    #         key: openai-api-key
-    #       # anonymized: false
-    #       # language: english
-    #     noCache: false
-    #     version: v0.3.40
-    #     # filters:
-    #     #   - Ingress
-    #     # sink:
-    #     #   type: slack
-    #     #   webhook: <webhook-url>
-    #     # extraOptions:
-    #     #   backstage:
-    #     #     enabled: true
-    #   EOF
-    # This loop extracts results from k8sgpt Analyzer 
-    - | 
-      while true; do
-        # Try to run the command and register the error output in stdout if there is one 
-        OUTPUT=$(kubectl get results -n k8sgpt-operator-system -o json | jq . 2>&1)
-
-        # Check if the command was successful by searching for the "openai" string in the command output
-        if echo "$OUTPUT" | grep -q "openai"; then
-          # If there openai output (specific to the results here), loop ends
-          break
-        fi
-
-        # If there is an error, print a message and retry after a set delay
-        echo "Resource not available yet, retrying in 5 seconds..."
-        sleep 5
-      done
-    - echo "$OUTPUT" > k8sresults.json
-    # Delete the deployment when results exists
-    # OpenAi API does cost around 7e-5 
-    # K8sgpt analyses the cluster non stop otherwise
-    - kubectl delete deployment -n k8sgpt-operator-system k8sgpt 
-  # Target the docker gitlab instance
-  tags:
-    - build_job_docker
-  artifacts:
-    untracked: false
-    when: on_success
-    access: developer
-    expire_in: 30 days
-    paths:
-      - $CI_PROJECT_DIR/k8sresults.json
-  # needs:
-  # # Job dependency
-  #   - deploy_eks
-  # when: manual
-
 # monitoring:
 #   stage: monitor
 #   image:
@@ -414,6 +324,68 @@ locust_loadtest:
   # Target the docker gitlab instance
   tags:
     - build_job_docker
+
+deploy_ai_analyzer:
+  stage: infra_test
+  image:
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
+  script:
+    # Make sur you are authentified to aws account with access to EKS endpoint
+    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+    - aws configure set region $AWS_REGION
+    # Set the EKS cluster endpoint as target for kubectl commands
+    - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+    # Add & install k8sgpt packages with Hekm
+    - helm repo add k8sgpt https://charts.k8sgpt.ai/ || true
+    - helm repo update
+    # Verify adding of k8sgpt packages
+    - helm list --all-namespaces
+    # # For maintenance purposes, crd of k8sgpt need to be removed before attempting to update
+    - kubectl delete crd k8sgpts.core.k8sgpt.ai || true
+    - helm uninstall release --namespace k8sgpt-operator-system || true
+    # Install k8sgpt package release
+    - helm install release k8sgpt/k8sgpt-operator -n k8sgpt-operator-system --create-namespace || true
+    # Create secret from openAI token value
+    - kubectl create secret generic k8sgpt-secret --from-literal=openai-api-key=$OPENAI_TOKEN -n k8sgpt-operator-system || true
+    # # Create the cr for the k8sgpt operator
+    # # Results of cluster analysis will be available as results resources in the operator namespace
+    - kubectl apply -f $CI_PROJECT_DIR/K8s/manifests/k8sgpt_cluster_operator/k8sgpt_operator.yml --dry-run=client -o yaml | kubectl apply -f -
+    # This loop extracts results from k8sgpt Analyzer 
+    - | 
+      while true; do
+        # Try to run the command and register the error output in stdout if there is one 
+        OUTPUT=$(kubectl get results -n k8sgpt-operator-system -o json | jq . 2>&1)
+
+        # Check if the command was successful by searching for the "openai" string in the command output
+        if echo "$OUTPUT" | grep -q "openai"; then
+          # If there openai output (specific to the results here), loop ends
+          break
+        fi
+
+        # If there is an error, print a message and retry after a set delay
+        echo "Resource not available yet, retrying in 5 seconds..."
+        sleep 5
+      done
+    - echo "$OUTPUT" > k8sresults.json
+    # Delete the deployment when results exists
+    # OpenAi API does cost around 7e-5 
+    # K8sgpt analyses the cluster non stop otherwise
+    - kubectl delete deployment -n k8sgpt-operator-system k8sgpt 
+  # Target the docker gitlab instance
+  tags:
+    - build_job_docker
+  artifacts:
+    untracked: false
+    when: on_success
+    access: developer
+    expire_in: 30 days
+    paths:
+      - $CI_PROJECT_DIR/k8sresults.json
+  # needs:
+  # # Job dependency
+  #   - deploy_eks
+  # when: manual
 
 
 destroy:
