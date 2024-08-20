@@ -114,51 +114,51 @@ build-docker-image:
 #       artifacts: true
 # # # # #   # when: manual
 
-# deploy_db:
-#   stage: deploy
-#   image:
-#     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
-#   environment:
-#     name: pre-production
-#   before_script:
-#     # yq packages needs to be installed on the runner instance
-#     - wget https://github.com/mikefarah/yq/releases/download/v4.25.1/yq_linux_amd64 -O /usr/local/bin/yq
-#     - chmod +x /usr/local/bin/yq
-#     - export TF_PASSWORD=${GITLAB_ACCESS_TOKEN}
-#     # Switch working directory to tf files locations
-#     - cd $CI_PROJECT_DIR/Terraform_Infra
-#     - rm -rf .terraform
-#     - terraform --version
-#     # Authenticate to Gitlab State management
-#     - terraform init -backend-config=password=${TF_PASSWORD}
-#     # Get the eks cluster vpc id and the route table
-#     # The vpc is needed to deploy the RDS db and the route table to make sure the cluster subnets and the database subnet can communicate
-#     - VPC_ID=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.resourcesVpcConfig.vpcId" --output text)
-#     - RTB_ID=$(aws ec2 describe-route-tables --region $AWS_REGION --filters "Name=vpc-id,Values=$VPC_ID" --query "RouteTables[?Associations[?Main==\`true\`]].RouteTableId" --output text)
-#   script:
-#     - terraform fmt -recursive
-#     - terraform validate
-#     # Supply needed secrets from Gitlab var repository
-#     # Deploy the RDS instance and update the network configuration with terraform
-#     - terraform plan -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD"
-#     - terraform apply -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" --auto-approve
-#     # Convert the output into yaml to be usable easier by k8s
-#     - terraform output -json | yq eval -P '.' > vars.yml
-#     - cat vars.yml
-#   needs:
-#     # Depends on EKS job
-#     - deploy_eks
-#     # Export the output as an artifact with 1 day retention, only viewable by dev on the project
-#   artifacts:
-#     untracked: false
-#     when: on_success
-#     access: developer
-#     expire_in: 1 days
-#     paths:
-#       - $CI_PROJECT_DIR/Terraform_Infra/vars.yml
-#     # Target the docker gitlab instance
-#   tags:
-#     - build_job_docker
+deploy_db:
+  stage: deploy
+  image:
+    name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
+  environment:
+    name: pre-production
+  before_script:
+    # yq packages needs to be installed on the runner instance
+    - wget https://github.com/mikefarah/yq/releases/download/v4.25.1/yq_linux_amd64 -O /usr/local/bin/yq
+    - chmod +x /usr/local/bin/yq
+    - export TF_PASSWORD=${GITLAB_ACCESS_TOKEN}
+    # Switch working directory to tf files locations
+    - cd $CI_PROJECT_DIR/Terraform_Infra
+    - rm -rf .terraform
+    - terraform --version
+    # Authenticate to Gitlab State management
+    - terraform init -backend-config=password=${TF_PASSWORD}
+    # Get the eks cluster vpc id and the route table
+    # The vpc is needed to deploy the RDS db and the route table to make sure the cluster subnets and the database subnet can communicate
+    - VPC_ID=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.resourcesVpcConfig.vpcId" --output text)
+    - RTB_ID=$(aws ec2 describe-route-tables --region $AWS_REGION --filters "Name=vpc-id,Values=$VPC_ID" --query "RouteTables[?Associations[?Main==\`true\`]].RouteTableId" --output text)
+  script:
+    - terraform fmt -recursive
+    - terraform validate
+    # Supply needed secrets from Gitlab var repository
+    # Deploy the RDS instance and update the network configuration with terraform
+    - terraform plan -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD"
+    - terraform apply -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" --auto-approve
+    # Convert the output into yaml to be usable easier by k8s
+    - terraform output -json | yq eval -P '.' > vars.yml
+    - cat vars.yml
+  needs:
+    # Depends on EKS job
+    - deploy_eks
+    # Export the output as an artifact with 1 day retention, only viewable by dev on the project
+  artifacts:
+    untracked: false
+    when: on_success
+    access: developer
+    expire_in: 1 days
+    paths:
+      - $CI_PROJECT_DIR/Terraform_Infra/vars.yml
+    # Target the docker gitlab instance
+  tags:
+    - build_job_docker
 # # #   # when: manual
 
   
@@ -264,8 +264,8 @@ deploy_stock_app:
     - cat lb_dns.env
   needs:
     # Job dependency, with artifact import enabled from them
-    # - job: deploy_db
-    #   artifacts: true
+    - job: deploy_db
+      artifacts: true
     - job: build-docker-image
       artifacts: true
     # Export the output as an artifact with 1 day retention, only viewable by dev on the project
