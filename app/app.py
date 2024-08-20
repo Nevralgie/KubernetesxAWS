@@ -129,8 +129,11 @@ def index():
     REQUEST_LATENCY.observe(duration)
     return render_template('stock_analysis.html', stock_data=stock_data)
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+# Metrics endpoint
+@app.route('/metrics')
+def metrics():
+    REQUEST_COUNT.inc()  # Increment the request count each time this endpoint is accessed
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
 @app.errorhandler(404)
 def not_found_error(error):
@@ -147,8 +150,5 @@ def handle_exception(e):
     EXCEPTION_COUNT.inc()
     return render_template('error.html'), 500
 
-# Metrics endpoint
-@app.route('/metrics')
-def metrics():
-    REQUEST_COUNT.inc()  # Increment the request count each time this endpoint is accessed
-    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
