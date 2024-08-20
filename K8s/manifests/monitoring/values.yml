@@ -4,6 +4,12 @@ prometheus:
     ruleSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
     probeSelectorNilUsesHelmValues: false
+    serviceMonitorSelector:
+      matchLabels:
+        app: demo-app
+    podMonitorSelector:
+      matchLabels:
+        app: demo-app
   
 grafana:
   enabled: true
