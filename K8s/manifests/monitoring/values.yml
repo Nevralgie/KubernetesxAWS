@@ -12,7 +12,7 @@ prometheus:
       - targets: ['service-stock-app-metrics:8000']
 grafana:
   enabled: true
-  adminPassword: @vAzurev69007v
+  adminPassword: vxAzurev69007xv
   service:
     type: ClusterIP
     port: 80
