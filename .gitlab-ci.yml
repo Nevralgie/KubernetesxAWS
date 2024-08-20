@@ -300,7 +300,7 @@ monitoring:
     # - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom --create-namespace -f $CI_PROJECT_DIR/K8s/manifests/monitoring/values.yml || true
     # - helm upgrade kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom -f $CI_PROJECT_DIR/K8s/manifests/monitoring/values.yml --reuse-values || true
     # - helm upgrade kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom || true
-    - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom --create-namespace $CI_PROJECT_DIR/K8s/manifests/monitoring/values.yml || true
+    - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom --create-namespace -f $CI_PROJECT_DIR/K8s/manifests/monitoring/values.yml || true
     - kubectl apply -f $CI_PROJECT_DIR/K8s/manifests/monitoring/servicemonitor_app.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl apply -f $CI_PROJECT_DIR/K8s/manifests/monitoring/servicemonitor_app.yml --dry-run=client -o yaml | kubectl apply -f -
     # Target the docker gitlab instance
