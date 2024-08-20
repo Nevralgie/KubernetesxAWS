@@ -293,7 +293,7 @@ monitoring:
     # Set the EKS cluster endpoint as target for kubectl commands
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
     # Add & Install the PrometheusxGrafana stack with Helm
-    - helm uninstall kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom
+    - helm uninstall kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom || true
     - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
     - helm repo update
     - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom --create-namespace -f $CI_PROJECT_DIR/K8s/manifests/monitoring/values.yml || true
