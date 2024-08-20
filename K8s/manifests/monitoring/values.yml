@@ -4,15 +4,13 @@ prometheus:
     ruleSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
     probeSelectorNilUsesHelmValues: false
-    kubeStateMetrics:
-      enabled: true
-  additionalScrapeConfigs:
-    - job_name: 'scrape_stock_app'
-      static_configs:
-        - targets: ['service-stock-app-metrics:metrics']
-          labels:
-            app: demo-app
-grafana:
+    additionalScrapeConfigs:
+      - job_name: 'scrape_stock_app'
+        static_configs:
+          - targets: ['service-stock-app-metrics:metrics']
+            labels:
+              app: demo-app
+  grafana:
   enabled: true
   adminPassword: vxAzurev69007xv
   service:
