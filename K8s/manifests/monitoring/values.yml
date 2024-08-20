@@ -6,9 +6,13 @@ prometheus:
     probeSelectorNilUsesHelmValues: false
     kubeStateMetrics:
       enabled: true
+  additionalScrapeConfigs:
+  - job_name: 'scrape_stock_app'
+      static_configs:
+        - targets: ['service-stock-app-metrics:8000']
 grafana:
   enabled: true
-  adminPassword: Azurev69007
+  adminPassword: @vAzurev69007v
   service:
     type: ClusterIP
     port: 80
