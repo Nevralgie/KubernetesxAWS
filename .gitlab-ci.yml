@@ -376,8 +376,8 @@ deploy_ai:
     - echo "$OUTPUT" > k8sresults.json
     # Delete the deployment when results exists
     # OpenAi API does cost around 7e-5 
-    # K8sgpt analyses the cluster non stop
-    # - kubectl delete deployment -n k8sgpt-operator-system k8sgpt 
+    # K8sgpt analyses the cluster non stop otherwise
+    - kubectl delete deployment -n k8sgpt-operator-system k8sgpt 
   # Target the docker gitlab instance
   tags:
     - build_job_docker
