@@ -268,10 +268,10 @@ deploy_stock_app:
     - cat lb_dns.env
   needs:
     # Job dependency, with artifact import enabled from them
-    # - job: deploy_db
-    #   artifacts: true
-    # - job: build-docker-image
-    #   artifacts: true
+    - job: deploy_db
+      artifacts: true
+    - job: build-docker-image
+      artifacts: true
     # Export the output as an artifact with 1 day retention, only viewable by dev on the project
   artifacts:
     untracked: false
@@ -310,7 +310,7 @@ monitoring:
     - build_job_docker
   needs:
     # Job dependency
-    # - deploy_eks
+    - deploy_eks
     - deploy_stock_app
 #   # when: manual
 
