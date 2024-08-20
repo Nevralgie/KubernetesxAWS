@@ -8,8 +8,8 @@ prometheus:
       enabled: true
   additionalScrapeConfigs:
   - job_name: 'scrape_stock_app'
-      static_configs:
-        - targets: ['service-stock-app-metrics:8000']
+    static_configs:
+      - targets: ['service-stock-app-metrics:8000']
 grafana:
   enabled: true
   adminPassword: @vAzurev69007v
