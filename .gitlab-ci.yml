@@ -360,12 +360,12 @@ deploy_ai:
     # This loop extracts results from k8sgpt Analyzer 
     - | 
       while true; do
-        # Try to run the command and register the error output in stdout
+        # Try to run the command and register the error output in stdout if there is one 
         OUTPUT=$(kubectl get results -n k8sgpt-operator-system -o json | jq . 2>&1)
 
-        # Check if the command was successful by searching for the "error" string in the command output
-        if ! echo "$OUTPUT" | grep -q "error:"; then
-          # If there is no error, loop ends
+        # Check if the command was successful by searching for the "openai" string in the command output
+        if echo "$OUTPUT" | grep -q "openai"; then
+          # If there openai output (specific to the results here), loop ends
           break
         fi
 
@@ -385,7 +385,7 @@ deploy_ai:
     untracked: false
     when: on_success
     access: developer
-    expire_in: 15 days
+    expire_in: 30 days
     paths:
       - $CI_PROJECT_DIR/k8sresults.json
   # needs:
