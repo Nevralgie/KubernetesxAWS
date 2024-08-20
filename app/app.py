@@ -1,11 +1,11 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, Response
 import pandas as pd
 import matplotlib.pyplot as plt
 import mysql.connector
 import io
 import base64
 import os
-from prometheus_client import start_http_server, Summary, Counter, Histogram
+from prometheus_client import Summary, Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 import time
 import random
 
@@ -15,8 +15,6 @@ FUNCTION_CALLS = Counter('function_calls_total', 'Total number of function calls
 REQUEST_LATENCY = Histogram('request_latency_seconds', 'Histogram for the duration in seconds')
 REQUEST_COUNT = Counter('http_req_total', 'HTTP Requests Total')
 
-# Start up the Prometheus metrics server
-start_http_server(8000)
 
 # Define static folder for css files
 STATIC_DIR = os.path.abspath('./static')
@@ -111,22 +109,24 @@ def analyze_data(data,stock_name):
     }
     return stock_data
 
-@app.before_request
-def before_request():
-    # Increment the HTTP request counter before each request
-    REQUEST_COUNT.inc()
-
 @app.route('/')
 def index():
+    REQUEST_COUNT.inc()
     FUNCTION_CALLS.inc()
     start_time = time.time()
     stock_data = {}
     for stock_name in stock_names:
         data = fetch_data(stock_name)
         stock_data[stock_name] = analyze_data(data, stock_name)
-    return render_template('stock_analysis.html', stock_data=stock_data)
     duration = time.time() - start_time
     REQUEST_LATENCY.observe(duration)
+    return render_template('stock_analysis.html', stock_data=stock_data)
+
+# Metrics endpoint
+@app.route('/metrics')
+def metrics():
+    REQUEST_COUNT.inc()  # Increment the request count each time this endpoint is accessed
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

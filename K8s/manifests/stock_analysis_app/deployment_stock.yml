@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: dum-app-container
-          image: registry.gitlab.com/nevii/leverage-your-own-k8s-expert/app_temoin:1.0.2
+          image: registry.gitlab.com/nevii/leverage-your-own-k8s-expert/app_temoin:1.0.3
           env:
           - name: DB_NAME
             valueFrom:
@@ -40,8 +40,6 @@ spec:
                 key: RDS_ADDRESS
           ports:
             - containerPort: 5000  # The port your application is listening on
-            - name: metrics  
-              containerPort: 8000 # Port for prometheus metrics
       imagePullSecrets:
         - name: gitlab-cred
 ---
@@ -54,13 +52,10 @@ spec:
   selector:
     app: demo-app
   ports:
-    - protocol: TCP
+    - name: http
+      protocol: TCP
       port: 5000  # The port on which the service will be exposed
       targetPort: 5000  # The port your application is listening on
-    - name: metrics
-      protocol: TCP
-      port: 8000  # The port on which the service will be exposed
-      targetPort: metrics  # The port your application is listening on
 
 ---
 apiVersion: networking.k8s.io/v1

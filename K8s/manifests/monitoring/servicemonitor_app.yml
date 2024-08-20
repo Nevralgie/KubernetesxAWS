@@ -9,9 +9,6 @@ spec:
     matchLabels:
       app: demo-app
   endpoints:
-  - port: metrics
+  - port: http
     path: /metrics
     interval: 10s
-  namespaceSelector:
-    matchNames:
-    - default
