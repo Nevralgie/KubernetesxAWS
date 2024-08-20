@@ -114,7 +114,7 @@ def analyze_data(data,stock_name):
 @app.before_request
 def before_request():
     # Increment the HTTP request counter before each request
-    request_count.inc()
+    REQUEST_COUNT.inc()
 
 @app.route('/')
 def index():
