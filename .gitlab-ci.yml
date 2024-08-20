@@ -296,7 +296,6 @@ monitoring:
     - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
     - helm repo update
     - helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom --create-namespace -f $CI_PROJECT_DIR/K8s/manifests/monitoring/values.yml || true
-    - kubectl apply -f $CI_PROJECT_DIR/K8s/manifests/monitoring/pod_monitor.yml --dry-run=client -o yaml | kubectl apply -f - || true
     - kubectl apply -f $CI_PROJECT_DIR/K8s/manifests/monitoring/servicemonitor_app.yml --dry-run=client -o yaml | kubectl apply -f -
     # Target the docker gitlab instance
   tags:
