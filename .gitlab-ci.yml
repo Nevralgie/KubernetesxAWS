@@ -7,6 +7,7 @@ variables:
   DOCKER_IMAGE: "app_temoin"
   APP_INGRESS_NAME: ingress-stock-app
   APP_VERSION: "1.0.1"
+  OPENAI_TOKEN: "$OPENAI_TOKEN"
 
 stages:
   - build
@@ -302,22 +303,51 @@ deploy_ai:
     - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/deployment.yml --dry-run=client -o yaml | kubectl apply -f -
     - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/service.yml --dry-run=client -o yaml | kubectl apply -f -
     # Create the crd for the k8sgpt operator 
+    # - |
+    #   kubectl apply -f - << EOF
+    #   apiVersion: core.k8sgpt.ai/v1alpha1
+    #   kind: K8sGPT
+    #   metadata:
+    #     name: k8sgpt-local-ai
+    #     namespace: k8sgpt-operator-system
+    #   spec:
+    #     ai:
+    #       enabled: true
+    #       model: open-llama-13b-open-instruct.ggmlv3.q3_K_M.bin
+    #       backend: localai
+    #       baseUrl: http://service-local-ai.k8sgpt-operator-system.svc.cluster.local:8080/v1
+    #     noCache: false
+    #     repository: ghcr.io/k8sgpt-ai/k8sgpt
+    #     version: v0.3.40
+    #   EOF
+    - kubectl create secret generic k8sgpt-secret --from-literal=openai-api-key=$OPENAI_TOKEN -n k8sgpt-operator-system
     - |
       kubectl apply -f - << EOF
       apiVersion: core.k8sgpt.ai/v1alpha1
       kind: K8sGPT
       metadata:
-        name: k8sgpt-local-ai
+        name: k8sgpt
         namespace: k8sgpt-operator-system
       spec:
         ai:
           enabled: true
-          model: open-llama-13b-open-instruct.ggmlv3.q3_K_M.bin
-          backend: localai
-          baseUrl: http://service-local-ai.k8sgpt-operator-system.svc.cluster.local:8080/v1
+          model: gpt-4o-mini
+          backend: openai
+          secret:
+            name: k8sgpt-secret
+            key: openai-api-key
+          # anonymized: false
+          # language: english
         noCache: false
-        repository: ghcr.io/k8sgpt-ai/k8sgpt
         version: v0.3.40
+        # filters:
+        #   - Ingress
+        # sink:
+        #   type: slack
+        #   webhook: <webhook-url>
+        # extraOptions:
+        #   backstage:
+        #     enabled: true
       EOF
   # Target the docker gitlab instance
   tags:
