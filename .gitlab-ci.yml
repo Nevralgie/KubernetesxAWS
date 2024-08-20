@@ -83,28 +83,28 @@ deploy_eks:
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
     # Create EKS cluster
-    - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --node-type t2.xlarge --nodes $NODE_COUNT --alb-ingress-access --node-private-networking --vpc-nat-mode Single || true
-    # Recreate the Load Balancer policy if needed
-    # # - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
-    # # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
-    # Update current client to use the API of or EKS cluster
-    - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-    # Create and associate an iam oidc identity provider. Enable managed identity for nodes and pods, needed for plugin deployment 
-    - eksctl utils associate-iam-oidc-provider --cluster=$EKS_CLUSTER_NAME --approve || true
-    # Create access entry, authentication mode for Kubernetes API endpoint cluster authentication. Define the service principal to use
-    - aws eks create-access-entry --cluster-name $EKS_CLUSTER_NAME --principal-arn arn:aws:iam::$ACCOUNT_ID:root --type STANDARD --username admin_eks || true
-    # Create the access policy for EKS cluster so it is authorized to interact with AWS resources
-    - aws eks associate-access-policy --cluster-name $EKS_CLUSTER_NAME  --principal-arn arn:aws:iam::$ACCOUNT_ID:root --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy --access-scope type=cluster || true
-    # Create the service account for managing the ALB through kubernetes objects
-    - eksctl create iamserviceaccount --cluster=$EKS_CLUSTER_NAME --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::$ACCOUNT_ID:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
-    # Create CNI addon, necessary for the aws load balancer controller
-    - eksctl create addon --cluster $EKS_CLUSTER_NAME --name vpc-cni --version latest --force
-    # Create EBS csi driver addon, need to provision a managed EBS volume for deploying the LLM
-    - eksctl create addon --name aws-ebs-csi-driver --cluster $EKS_CLUSTER_NAME --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy --force
-    # Add & Install load balancer controller with Helm through eks repo, using previously created service account
-    - helm repo add eks https://aws.github.io/eks-charts
-    - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller || true
-    - sleep 10 # aws-load-balancer-webhook-service needs time to be up and running
+    # - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --node-type t2.xlarge --nodes $NODE_COUNT --alb-ingress-access --node-private-networking --vpc-nat-mode Single || true
+    # # Recreate the Load Balancer policy if needed
+    # # # - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
+    # # # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
+    # # Update current client to use the API of or EKS cluster
+    # - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+    # # Create and associate an iam oidc identity provider. Enable managed identity for nodes and pods, needed for plugin deployment 
+    # - eksctl utils associate-iam-oidc-provider --cluster=$EKS_CLUSTER_NAME --approve || true
+    # # Create access entry, authentication mode for Kubernetes API endpoint cluster authentication. Define the service principal to use
+    # - aws eks create-access-entry --cluster-name $EKS_CLUSTER_NAME --principal-arn arn:aws:iam::$ACCOUNT_ID:root --type STANDARD --username admin_eks || true
+    # # Create the access policy for EKS cluster so it is authorized to interact with AWS resources
+    # - aws eks associate-access-policy --cluster-name $EKS_CLUSTER_NAME  --principal-arn arn:aws:iam::$ACCOUNT_ID:root --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy --access-scope type=cluster || true
+    # # Create the service account for managing the ALB through kubernetes objects
+    # - eksctl create iamserviceaccount --cluster=$EKS_CLUSTER_NAME --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::$ACCOUNT_ID:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
+    # # Create CNI addon, necessary for the aws load balancer controller
+    # - eksctl create addon --cluster $EKS_CLUSTER_NAME --name vpc-cni --version latest --force
+    # # Create EBS csi driver addon, need to provision a managed EBS volume for deploying the LLM
+    # - eksctl create addon --name aws-ebs-csi-driver --cluster $EKS_CLUSTER_NAME --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy --force
+    # # Add & Install load balancer controller with Helm through eks repo, using previously created service account
+    # - helm repo add eks https://aws.github.io/eks-charts
+    # - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller || true
+    # - sleep 10 # aws-load-balancer-webhook-service needs time to be up and running
   tags:
     # Target the docker gitlab instance
     - build_job_docker
@@ -250,7 +250,13 @@ deploy_stock_app:
     # Deploy the application using a deployment manifest. A service and an Ingress are also defined 
     - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/stock_analysis_app/deployment_stock.yml --dry-run=client -o yaml | kubectl apply -f -
     # Make sure the dns name is associated and the LB is up and running before extracting the dns adress into as environment variable into a file
-    - sleep 300
+    # Loop exits when non zero value is returned, retries every 10 secondes
+    - |
+      while [ -z "$LB_DNS" ]; do 
+        echo "Waiting for Ingress to apply and return Load Balancer DNS name, retrying in 5 seconds..."
+        sleep 5
+        LB_DNS=$(kubectl get ingress ingress-stock-app -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+      done
     # Extract and store the ALB DNS adress value
     - LB_DNS=$(kubectl get ingress ingress-stock-app -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
     - echo "LB_DNS=$LB_DNS" > lb_dns.env
@@ -298,57 +304,81 @@ deploy_ai:
     # Install k8sgpt package release
     - helm install release k8sgpt/k8sgpt-operator -n k8sgpt-operator-system --create-namespace || true
     # Deploy local-AI image and the LLM model with needed resources
-    - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/pvc.yml --dry-run=client -o yaml | kubectl apply -f -
-    - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/storageclass.yml --dry-run=client -o yaml | kubectl apply -f -
-    - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/deployment.yml --dry-run=client -o yaml | kubectl apply -f -
-    - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/service.yml --dry-run=client -o yaml | kubectl apply -f -
+    # - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/pvc.yml --dry-run=client -o yaml | kubectl apply -f -
+    # - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/storageclass.yml --dry-run=client -o yaml | kubectl apply -f -
+    # - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/deployment.yml --dry-run=client -o yaml | kubectl apply -f -
+    # - kubectl create -f $CI_PROJECT_DIR/K8s/manifests/local_ai/service.yml --dry-run=client -o yaml | kubectl apply -f -
     # Create the crd for the k8sgpt operator 
-    - |
-      kubectl apply -f - << EOF
-      apiVersion: core.k8sgpt.ai/v1alpha1
-      kind: K8sGPT
-      metadata:
-        name: k8sgpt-local-ai
-        namespace: k8sgpt-operator-system
-      spec:
-        ai:
-          enabled: true
-          model: open-llama-13b-open-instruct.ggmlv3.q3_K_M.bin
-          backend: localai
-          baseUrl: http://service-local-ai.k8sgpt-operator-system.svc.cluster.local:8080
-        noCache: false
-        repository: ghcr.io/k8sgpt-ai/k8sgpt
-        version: v0.3.40
-      EOF
-    # - kubectl create secret generic k8sgpt-secret --from-literal=openai-api-key=$OPENAI_TOKEN -n k8sgpt-operator-system
     # - |
     #   kubectl apply -f - << EOF
     #   apiVersion: core.k8sgpt.ai/v1alpha1
     #   kind: K8sGPT
     #   metadata:
-    #     name: k8sgpt
+    #     name: k8sgpt-local-ai
     #     namespace: k8sgpt-operator-system
     #   spec:
     #     ai:
     #       enabled: true
-    #       model: gpt-4o-mini
-    #       backend: openai
-    #       secret:
-    #         name: k8sgpt-secret
-    #         key: openai-api-key
-    #       # anonymized: false
-    #       # language: english
+    #       model: open-llama-13b-open-instruct.ggmlv3.q3_K_M.bin
+    #       backend: localai
+    #       baseUrl: http://service-local-ai.k8sgpt-operator-system.svc.cluster.local:8080
     #     noCache: false
+    #     repository: ghcr.io/k8sgpt-ai/k8sgpt
     #     version: v0.3.40
-    #     # filters:
-    #     #   - Ingress
-    #     # sink:
-    #     #   type: slack
-    #     #   webhook: <webhook-url>
-    #     # extraOptions:
-    #     #   backstage:
-    #     #     enabled: true
     #   EOF
+    # Create secret from openAI token value
+    - kubectl create secret generic k8sgpt-secret --from-literal=openai-api-key=$OPENAI_TOKEN -n k8sgpt-operator-system
+    # Create the cr for the k8sgpt operator
+    # Results of cluster analysis will be available as results resources in the operator namespace
+    - |
+      kubectl apply -f - << EOF
+      apiVersion: core.k8sgpt.ai/v1alpha1
+      kind: K8sGPT
+      metadata:
+        name: k8sgpt
+        namespace: k8sgpt-operator-system
+      spec:
+        ai:
+          enabled: true
+          model: gpt-4o-mini
+          backend: openai
+          secret:
+            name: k8sgpt-secret
+            key: openai-api-key
+          # anonymized: false
+          # language: english
+        noCache: false
+        version: v0.3.40
+        # filters:
+        #   - Ingress
+        # sink:
+        #   type: slack
+        #   webhook: <webhook-url>
+        # extraOptions:
+        #   backstage:
+        #     enabled: true
+      EOF
+    # - kubectl get results k8sgpt-operator-system -n -o json | jq .
+    # This loop extracts results from k8sgpt Analyzer 
+    - | 
+      while true; do
+        # Try to run the command and register the error output in stdout
+        OUTPUT=$(kubectl get results k8sgpt-operator-system -n -o json | jq . 2>&1)
+
+        # Check if the command was successful by searching for the "error" string in the command output
+        if ! echo "$OUTPUT" | grep -q "error:"; then
+          # If there is no error, loop ends
+          break
+        fi
+
+        # If there is an error, print a message and retry after a set delay
+        echo "Resource not available yet, retrying in 5 seconds..."
+        sleep 5
+      done
+    # Delete the deployment when results exists
+    # OpenAi API does cost around 7e-5 
+    # K8sgpt analyses the cluster non stop
+    - kubectl delete deployment -n k8sgpt-operator-system k8sgpt
   # Target the docker gitlab instance
   tags:
     - build_job_docker
@@ -368,8 +398,6 @@ monitoring:
     - aws configure set region $AWS_REGION
     # Set the EKS cluster endpoint as target for kubectl commands
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-    # - helm repo add eks https://aws.github.io/eks-charts
-    # - helm repo update eks
     # Add & Install the PrometheusxGrafana stack with Helm
     - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
     - helm repo update
