@@ -38,8 +38,13 @@ spec:
               secretKeyRef:
                 name: db-credentials
                 key: RDS_ADDRESS
+          - name: PROMETHEUS_METRICS_PORT
+            value: "8000"
+          - name: PROMETHEUS_METRICS_PATH
+            value: "/metrics"
           ports:
             - containerPort: 5000  # The port your application is listening on
+            - containerPort: 8000 # Port for prometheus metrics
       imagePullSecrets:
         - name: gitlab-cred
 ---

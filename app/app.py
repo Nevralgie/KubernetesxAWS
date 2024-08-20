@@ -5,6 +5,17 @@ import mysql.connector
 import io
 import base64
 import os
+from prometheus_client import start_http_server, Summary, Counter, Histogram
+import time
+import random
+
+# Define Prometheus metrics
+REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing request')
+FUNCTION_CALLS = Counter('function_calls_total', 'Total number of function calls')
+REQUEST_LATENCY = Histogram('request_latency_seconds', 'Histogram for the duration in seconds')
+
+# Start up the Prometheus metrics server
+start_http_server(8000)
 
 # Define static folder for css files
 STATIC_DIR = os.path.abspath('./static')
@@ -19,15 +30,23 @@ stock_names = ['AMZN', 'MSFT']  # Replace with your desired stock symbols
 
 # Load database credentials from environment variables
 def get_db_connection():
+    # Increment the function calls counter
+    FUNCTION_CALLS.inc()
+    start_time = time.time()
     return mysql.connector.connect(
         user='eks_administrator',
         password='vAdmintest69007v',
         host='mysql-service',
         database='db_app',
     )
+    # Record latency
+    duration = time.time() - start_time
+    REQUEST_LATENCY.observe(duration)
 
 
 def fetch_data(stock_name):
+    FUNCTION_CALLS.inc()
+    start_time = time.time()
     # Fetch data from MySQL database
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -49,8 +68,12 @@ def fetch_data(stock_name):
     cursor.close()
     conn.close()
     return data
+    duration = time.time() - start_time
+    REQUEST_LATENCY.observe(duration)
 
 def analyze_data(data,stock_name):
+    FUNCTION_CALLS.inc()
+    start_time = time.time()
     # Perform stock market analysis on the data
     # Calculate 50-day moving average
     data['MA50'] = data['Close'].rolling(window=50).mean()
@@ -96,6 +119,8 @@ def analyze_data(data,stock_name):
         'plot_url': 'data:image/png;base64,{}'.format(plot_url)
     }
     return stock_data
+    duration = time.time() - start_time
+    REQUEST_LATENCY.observe(duration)
 
 @app.route('/')
 def index():
