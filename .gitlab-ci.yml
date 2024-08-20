@@ -6,7 +6,7 @@ variables:
   ACCOUNT_ID: "$AWS_ACCOUNT_ID"
   DOCKER_IMAGE: "app_temoin"
   APP_INGRESS_NAME: ingress-stock-app
-  APP_VERSION: "1.0.1"
+  APP_VERSION: "1.0.2"
   OPENAI_TOKEN: "$OPENAI_TOKEN"
 
 stages:
@@ -303,6 +303,7 @@ monitoring:
   needs:
     # Job dependency
     - deploy_eks
+    - deploy_stock_app
 #   # when: manual
 
 # Job to run the load test using the DNS fetched in the previous job

@@ -4,8 +4,6 @@ prometheus:
     ruleSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
     probeSelectorNilUsesHelmValues: false
-    kubeStateMetrics:
-      enabled: true
 grafana:
   enabled: true
   adminPassword: Azurev69007

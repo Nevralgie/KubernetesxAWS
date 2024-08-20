@@ -13,6 +13,7 @@ import random
 REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing request')
 FUNCTION_CALLS = Counter('function_calls_total', 'Total number of function calls')
 REQUEST_LATENCY = Histogram('request_latency_seconds', 'Histogram for the duration in seconds')
+REQUEST_COUNT = Counter('http_req_total', 'HTTP Requests Total')
 
 # Start up the Prometheus metrics server
 start_http_server(8000)
@@ -31,8 +32,6 @@ stock_names = ['AMZN', 'MSFT']  # Replace with your desired stock symbols
 # Load database credentials from environment variables
 def get_db_connection():
     # Increment the function calls counter
-    FUNCTION_CALLS.inc()
-    start_time = time.time()
     return mysql.connector.connect(
         user='eks_administrator',
         password='vAdmintest69007v',
@@ -40,13 +39,9 @@ def get_db_connection():
         database='db_app',
     )
     # Record latency
-    duration = time.time() - start_time
-    REQUEST_LATENCY.observe(duration)
 
 
 def fetch_data(stock_name):
-    FUNCTION_CALLS.inc()
-    start_time = time.time()
     # Fetch data from MySQL database
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -68,12 +63,8 @@ def fetch_data(stock_name):
     cursor.close()
     conn.close()
     return data
-    duration = time.time() - start_time
-    REQUEST_LATENCY.observe(duration)
 
 def analyze_data(data,stock_name):
-    FUNCTION_CALLS.inc()
-    start_time = time.time()
     # Perform stock market analysis on the data
     # Calculate 50-day moving average
     data['MA50'] = data['Close'].rolling(window=50).mean()
@@ -119,16 +110,23 @@ def analyze_data(data,stock_name):
         'plot_url': 'data:image/png;base64,{}'.format(plot_url)
     }
     return stock_data
-    duration = time.time() - start_time
-    REQUEST_LATENCY.observe(duration)
+
+@app.before_request
+def before_request():
+    # Increment the HTTP request counter before each request
+    request_count.inc()
 
 @app.route('/')
 def index():
+    FUNCTION_CALLS.inc()
+    start_time = time.time()
     stock_data = {}
     for stock_name in stock_names:
         data = fetch_data(stock_name)
         stock_data[stock_name] = analyze_data(data, stock_name)
     return render_template('stock_analysis.html', stock_data=stock_data)
+    duration = time.time() - start_time
+    REQUEST_LATENCY.observe(duration)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
