@@ -292,6 +292,7 @@ monitoring:
     - aws configure set region $AWS_REGION
     # Set the EKS cluster endpoint as target for kubectl commands
     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+    - helm list --all-namespaces
     # Add & Install the PrometheusxGrafana stack with Helm
     - helm uninstall kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitor-graf-prom || true
     - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
