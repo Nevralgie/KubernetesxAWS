@@ -8,11 +8,11 @@ spec:
   replicas: 2
   selector:
     matchLabels:
-      app: demo-app
+      app: stock-app
   template:
     metadata:
       labels:
-        app: demo-app
+        app: stock-app
     spec:
       containers:
         - name: dum-app-container
@@ -49,11 +49,11 @@ kind: Service
 metadata:
   name: service-stock-app
   labels:
-    app: demo-app
+    app: stock-app
   namespace: default
 spec:
   selector:
-    app: demo-app
+    app: stock-app
   ports:
     - name: http
       protocol: TCP
