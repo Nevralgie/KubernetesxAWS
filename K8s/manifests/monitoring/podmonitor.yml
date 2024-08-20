@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: stock-analysis-app-pod-monitor
+spec:
+  selector:
+    matchLabels:
+      app: demo-app
+  podMetricsEndpoints:
+  - port: metrics
+    path: /metrics
+    interval: 10s
+  namespaceSelector:
+    matchNames:
+    - default
