@@ -61,6 +61,23 @@ spec:
     - protocol: TCP
       port: 5000  # The port on which the service will be exposed
       targetPort: 5000  # The port your application is listening on
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-stock-app-metrics
+  namespace: default
+spec:
+  selector:
+    app: demo-app
+  ports:
+    - name: metrics
+      protocol: TCP
+      port: 8000  # The port on which the service will be exposed
+      targetPort: 8000  # The port your application is listening on
+
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
