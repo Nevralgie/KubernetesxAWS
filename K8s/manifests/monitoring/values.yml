@@ -7,7 +7,6 @@ prometheus:
     kubeStateMetrics:
       enabled: true
   additionalScrapeConfigs:
-    enabled: true
     - job_name: 'scrape_stock_app'
       static_configs:
         - targets: ['service-stock-app-metrics:metrics']

@@ -6,7 +6,7 @@ spec:
   selector:
     matchLabels:
       app: demo-app
-  podMetricsEndpoints:
+  endpoints:
   - port: metrics
     path: /metrics
     interval: 10s
