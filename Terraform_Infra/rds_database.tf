@@ -8,8 +8,8 @@ resource "aws_db_instance" "rds_mysql" {
   username             = var.db_username
   password             = var.db_password
   db_subnet_group_name = aws_db_subnet_group.rds_subnet_group.name
-  multi_az             = false
+  multi_az             = true
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
   skip_final_snapshot  = false
-  final_snapshot_identifier = true
+  final_snapshot_identifier = snapshot_deploy_initial_state
 }

@@ -211,7 +211,7 @@ deploy_stock_app:
         .dockerconfigjson: $(cat .docker/config.json | base64 -w 0)
       type: kubernetes.io/dockerconfigjson
       EOF
-    - kubectl create -f gitlab_secret.yml --dry-run=client -o yaml | kubectl apply -f -
+    - kubectl apply -f gitlab_secret.yml --dry-run=client -o yaml | kubectl apply -f -
     # Create a service in the cluster for communicating with the RDS instance
     # The rds dns adress extracted form the deploy db job will be used
     - |
@@ -232,7 +232,7 @@ deploy_stock_app:
       EOF
     # Create a secret to be used for the app authentication toward the RDS instance
     # The values used will be extracted from the deploy db job
-    - kubectl create -f mysql-service.yml --dry-run=client -o yaml | kubectl apply -f -
+    - kubectl apply -f mysql-service.yml --dry-run=client -o yaml | kubectl apply -f -
     - |
       cat <<EOF > db_secret.yml
       apiVersion: v1
@@ -246,7 +246,7 @@ deploy_stock_app:
         RDS_ADDRESS: $(yq eval '.rds_address.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
         DB_NAME: $(yq eval '.database_name.value' $CI_PROJECT_DIR/Terraform_Infra/vars.yml | base64 -w 0)
       EOF
-    - kubectl create -f db_secret.yml --dry-run=client -o yaml | kubectl apply -f -
+    - kubectl apply -f db_secret.yml --dry-run=client -o yaml | kubectl apply -f -
     # Configure a storage class (EBS) for storage provisioning from k8s
     - kubectl apply -f $CI_PROJECT_DIR/K8s/manifests/stock_analysis_app/storageclass.yml --dry-run=client -o yaml | kubectl apply -f -
     # Configure persistent volume claim to deploy EBS volumes for persistent datas
