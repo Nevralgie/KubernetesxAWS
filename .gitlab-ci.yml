@@ -385,6 +385,7 @@ deploy_ai_analyzer:
     # K8sgpt analyses the cluster non stop otherwise
     - kubectl delete crd k8sgpts.core.k8sgpt.ai
   # Target the docker gitlab instance
+    - helm uninstall release --namespace k8sgpt-operator-system || true
   tags:
     - build_job_docker
   artifacts:
