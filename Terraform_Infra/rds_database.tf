@@ -11,5 +11,5 @@ resource "aws_db_instance" "rds_mysql" {
   multi_az             = true
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
   skip_final_snapshot  = false
-  final_snapshot_identifier = deploy-state
+  final_snapshot_identifier = "deploy-state"
 }
