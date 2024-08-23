@@ -10,6 +10,7 @@ resource "aws_db_instance" "rds_mysql" {
   db_subnet_group_name = aws_db_subnet_group.rds_subnet_group.name
   multi_az             = true
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
+  backup_retention_period = 14
   skip_final_snapshot  = false
   final_snapshot_identifier = "deploy-state"
 }
