@@ -3,6 +3,9 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_COMMIT_REF_NAME == 'test'
 
+only:
+  - test
+
 variables:
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
   EKS_CLUSTER_NAME: "eks-k8sgptxlocalai"
@@ -76,6 +79,7 @@ build-docker-image:
       - combinedHtmlReport.html
       - report.xml
       - .docker/config.json
+  
 
 deploy_eks:
   stage: deploy
