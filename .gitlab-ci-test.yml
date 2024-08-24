@@ -1,7 +1,8 @@
 workflow:
   rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_COMMIT_REF_NAME == 'test'
+    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: never
 
 variables:
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"

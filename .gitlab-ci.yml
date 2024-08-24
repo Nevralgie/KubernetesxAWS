@@ -1,5 +1,4 @@
 # Main CI/CD configuration file that includes other pipeline files for test and prod environment
-# two
 trigger_job_test:
   trigger:
     include:
@@ -8,7 +7,6 @@ trigger_job_test:
     - if: $CI_PIPELINE_SOURCE == "push"
       when: never
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_COMMIT_REF_NAME == 'test' 
 
 trigger_job_main:
   trigger:
