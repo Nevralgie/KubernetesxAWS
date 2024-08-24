@@ -20,7 +20,6 @@ stages:
   - build
   - deploy
   - provision
-  - infra_test
   - monitor
   - destroy_infra
   - destroy_cluster
