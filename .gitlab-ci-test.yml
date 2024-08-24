@@ -348,8 +348,8 @@ locust_loadtest:
   tags:
     - build_job_docker
   # Runs only for the test branch
-  only:
-    - test
+  # only:
+  #   - test
   # when: manual
 
 deploy_ai_analyzer:
@@ -415,8 +415,8 @@ deploy_ai_analyzer:
     - deploy_eks
     - monitoring
   # Runs only for the test branch
-  only:
-    - test
+  # only:
+  #   - test
   # when: manual
 
 destroy:
