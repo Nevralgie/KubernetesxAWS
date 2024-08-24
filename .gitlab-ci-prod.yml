@@ -2,8 +2,6 @@ workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
     - if: $CI_COMMIT_REF_NAME == 'main'
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: never
 
 variables:
   ENV: "production"

@@ -1,9 +1,8 @@
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
-    - if: $CI_COMMIT_REF_NAME == 'features'
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: never
+    - if: $CI_COMMIT_REF_NAME == 'test'
+
 
 variables:
   ENV: "test"
