@@ -6,7 +6,7 @@ workflow:
       when: never
 
 variables:
-  ENV: "Production"
+  ENV: "production"
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
   EKS_CLUSTER_NAME: "eks-k8sgptxlocalai"
   AWS_REGION: "eu-west-3"

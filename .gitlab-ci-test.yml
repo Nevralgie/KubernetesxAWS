@@ -6,7 +6,7 @@ workflow:
       when: never
 
 variables:
-  ENV: "Test"
+  ENV: "test"
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
   EKS_CLUSTER_NAME: "eks-k8sgptxlocalai-stage-env"
   AWS_REGION: "eu-west-3"
@@ -92,29 +92,29 @@ deploy_eks:
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
-    # Create EKS cluster
-    - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --vpc-cidr $TEST_ENV_CIDR --node-type t2.xlarge --nodes $NODE_COUNT --tags "Environment=Test" --alb-ingress-access --node-private-networking --vpc-nat-mode Single || true
-    # Recreate the Load Balancer policy if needed
-    # # - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
-    # # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
-    # Update current client to use the API of or EKS cluster
-    - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-    # Create and associate an iam oidc identity provider. Enable managed identity for nodes and pods, needed for plugin deployment 
-    - eksctl utils associate-iam-oidc-provider --cluster=$EKS_CLUSTER_NAME --approve || true
-    # Create access entry, authentication mode for Kubernetes API endpoint cluster authentication. Define the service principal to use
-    - aws eks create-access-entry --cluster-name $EKS_CLUSTER_NAME --principal-arn arn:aws:iam::$ACCOUNT_ID:root --type STANDARD --username admin_eks || true
-    # Create the access policy for EKS cluster so it is authorized to interact with AWS resources
-    - aws eks associate-access-policy --cluster-name $EKS_CLUSTER_NAME  --principal-arn arn:aws:iam::$ACCOUNT_ID:root --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy --access-scope type=cluster || true
-    # Create the service account for managing the ALB through kubernetes objects
-    - eksctl create iamserviceaccount --cluster=$EKS_CLUSTER_NAME --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::$ACCOUNT_ID:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
-    # Create CNI addon, necessary for the aws load balancer controller
-    - eksctl create addon --cluster $EKS_CLUSTER_NAME --name vpc-cni --version latest --force
-    # Create EBS csi driver addon, need to provision a managed EBS volume for deploying the LLM
-    - eksctl create addon --name aws-ebs-csi-driver --cluster $EKS_CLUSTER_NAME --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy --force
-    # Add & Install load balancer controller with Helm through eks repo, using previously created service account
-    - helm repo add eks https://aws.github.io/eks-charts
-    - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller || true
-    - sleep 10 # aws-load-balancer-webhook-service needs time to be up and running
+    # # Create EKS cluster
+    # - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --vpc-cidr $TEST_ENV_CIDR --node-type t2.xlarge --nodes $NODE_COUNT --tags "Environment=Test" --alb-ingress-access --node-private-networking --vpc-nat-mode Single || true
+    # # Recreate the Load Balancer policy if needed
+    # # # - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
+    # # # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
+    # # Update current client to use the API of or EKS cluster
+    # - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+    # # Create and associate an iam oidc identity provider. Enable managed identity for nodes and pods, needed for plugin deployment 
+    # - eksctl utils associate-iam-oidc-provider --cluster=$EKS_CLUSTER_NAME --approve || true
+    # # Create access entry, authentication mode for Kubernetes API endpoint cluster authentication. Define the service principal to use
+    # - aws eks create-access-entry --cluster-name $EKS_CLUSTER_NAME --principal-arn arn:aws:iam::$ACCOUNT_ID:root --type STANDARD --username admin_eks || true
+    # # Create the access policy for EKS cluster so it is authorized to interact with AWS resources
+    # - aws eks associate-access-policy --cluster-name $EKS_CLUSTER_NAME  --principal-arn arn:aws:iam::$ACCOUNT_ID:root --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy --access-scope type=cluster || true
+    # # Create the service account for managing the ALB through kubernetes objects
+    # - eksctl create iamserviceaccount --cluster=$EKS_CLUSTER_NAME --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::$ACCOUNT_ID:policy/AWSLoadBalancerControllerIAMPolicy --override-existing-serviceaccounts --approve
+    # # Create CNI addon, necessary for the aws load balancer controller
+    # - eksctl create addon --cluster $EKS_CLUSTER_NAME --name vpc-cni --version latest --force
+    # # Create EBS csi driver addon, need to provision a managed EBS volume for deploying the LLM
+    # - eksctl create addon --name aws-ebs-csi-driver --cluster $EKS_CLUSTER_NAME --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy --force
+    # # Add & Install load balancer controller with Helm through eks repo, using previously created service account
+    # - helm repo add eks https://aws.github.io/eks-charts
+    # - helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=$EKS_CLUSTER_NAME --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller || true
+    # - sleep 10 # aws-load-balancer-webhook-service needs time to be up and running
   tags:
     # Target the docker gitlab instance
     - build_job_docker
