@@ -1,12 +1,6 @@
 # Main CI/CD configuration file that includes other pipeline files for test and prod environment
-  - local: '/.gitlab-ci-test.yml'
-  - local: '/.gitlab-ci-main.yml'
-
-workflow:
-  rules:
-    - if: '$CI_COMMIT_REF_NAME == "test"'
-      include:
-        - local: '/.gitlab-ci-test.yml'
-    - if: '$CI_COMMIT_REF_NAME == "main"'
-      include:
-        - local: '/.gitlab-ci-main.yml'
+trigger_job:
+  trigger:
+    include:
+    - local: '/.gitlab-ci-test.yml'
+    - local: '/.gitlab-ci-prod.yml'
