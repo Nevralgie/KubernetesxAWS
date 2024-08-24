@@ -28,7 +28,7 @@ stages:
 build-docker-image:
   stage: build
   rules:
-     if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   image: 
     name: docker:24.0.5
   services:
