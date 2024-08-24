@@ -2,6 +2,11 @@
 # one
 trigger_job:
   trigger:
-    include:
-    - local: '/.gitlab-ci-test.yml'
-    - local: '/.gitlab-ci-prod.yml'
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_REF_NAME == 'test'
+      include:
+      - local: '/.gitlab-ci-test.yml'
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_REF_NAME == 'main'
+      include:
+      - local: '/.gitlab-ci-prod.yml'
