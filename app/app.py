@@ -138,17 +138,17 @@ def metrics():
 @app.errorhandler(404)
 def not_found_error(error):
     HTTP_ERROR_COUNT.labels(status_code=404).inc()
-    return render_template('404.html'), 404
+    return "404 Not Found", 404
 
 @app.errorhandler(500)
 def internal_error(error):
     HTTP_ERROR_COUNT.labels(status_code=500).inc()
-    return render_template('500.html'), 500
+    return "500 Internal Server Error", 500
 
 @app.errorhandler(Exception)
 def handle_exception(e):
     EXCEPTION_COUNT.inc()
-    return render_template('error.html'), 500
+    return "An unexpected error occurred.", 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=false)
