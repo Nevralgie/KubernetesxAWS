@@ -1,9 +1,9 @@
-workflow:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
-    - if: $CI_COMMIT_REF_NAME == 'features'
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: never
+# workflow:
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+#     - if: $CI_COMMIT_REF_NAME == 'features'
+#     - if: $CI_PIPELINE_SOURCE == "push"
+#       when: never
 
 variables:
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
@@ -28,6 +28,11 @@ stages:
 
 build-docker-image:
   stage: build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+    - if: $CI_COMMIT_REF_NAME == 'features'
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: never
   image: 
     name: docker:24.0.5
   services:
@@ -340,8 +345,8 @@ locust_loadtest:
     # Job dependency, with artifact import enabled from them
     - job: deploy_stock_app
       artifacts: true
-    # - job: monitoring
-    #   artifacts: false
+    - job: monitoring
+      artifacts: false
   # Target the docker gitlab instance
   tags:
     - build_job_docker
@@ -408,7 +413,7 @@ deploy_ai_analyzer:
   needs:
   # Job dependency
     - deploy_eks
-    # - monitoring
+    - monitoring
   # when: manual
 
 
