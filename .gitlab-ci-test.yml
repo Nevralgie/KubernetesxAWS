@@ -344,7 +344,7 @@ locust_loadtest:
   # Target the docker gitlab instance
   tags:
     - build_job_docker
-  when: manual
+  # when: manual
 
 deploy_ai_analyzer:
   stage: infra_test
