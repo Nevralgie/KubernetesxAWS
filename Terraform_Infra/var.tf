@@ -17,3 +17,8 @@ variable "db_password" {
   description = "Database password"
   type = string
 }
+
+variable "environment" {
+  description = "Working environment"
+  type = string
+}
