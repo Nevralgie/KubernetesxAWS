@@ -11,7 +11,7 @@ data "aws_vpc" "target_peering_vpc" {
 # Create additional private subnets
 resource "aws_subnet" "private_subnet_1" {
   vpc_id                  = data.aws_vpc.eks_vpc.id
-  cidr_block              = var.environment == "production" ? "10.0.0.0/20" : "172.16.0.0/20"
+  cidr_block              = var.environment == "production" ? "10.0.192.0/19" : "172.16.192.0/19"
   availability_zone       = "eu-west-3a"
   map_public_ip_on_launch = false
   tags = {
@@ -21,7 +21,7 @@ resource "aws_subnet" "private_subnet_1" {
 
 resource "aws_subnet" "private_subnet_2" {
   vpc_id                  = data.aws_vpc.eks_vpc.id
-  cidr_block              = var.environment == "production" ? "10.0.16.0/20" : "172.16.16.0/20"
+  cidr_block              = var.environment == "production" ? "10.0.224.0/19" : "172.16.224.0/19"
   availability_zone       = "eu-west-3b"
   map_public_ip_on_launch = false
   tags = {
