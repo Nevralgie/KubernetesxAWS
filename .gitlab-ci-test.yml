@@ -8,7 +8,7 @@ workflow:
 variables:
   ENV: "Test"
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
-  EKS_CLUSTER_NAME: "eks-k8sgptxlocalai-staging"
+  EKS_CLUSTER_NAME: "eks-k8sgptxlocalai-stage-env"
   AWS_REGION: "eu-west-3"
   NODE_COUNT: "2"
   ACCOUNT_ID: "$AWS_ACCOUNT_ID"

@@ -18,6 +18,7 @@ variable "db_password" {
   type = string
 }
 
-variable "environment"
+variable "environment" {
   description = "Working environment"
   type = string
+}
