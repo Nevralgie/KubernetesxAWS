@@ -340,8 +340,8 @@ locust_loadtest:
     # Job dependency, with artifact import enabled from them
     - job: deploy_stock_app
       artifacts: true
-    - job: monitoring
-      artifacts: false
+    # - job: monitoring
+    #   artifacts: false
   # Target the docker gitlab instance
   tags:
     - build_job_docker
