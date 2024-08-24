@@ -4,6 +4,7 @@ trigger_job_test:
   trigger:
     include:
       - local: '/.gitlab-ci-test.yml'
+      # - local: '/.gitlab-ci-prod.yml'
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
       when: never
@@ -13,6 +14,7 @@ trigger_job_main:
   trigger:
     include:
       - local: '/.gitlab-ci-prod.yml'
+  # rule
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
       when: never

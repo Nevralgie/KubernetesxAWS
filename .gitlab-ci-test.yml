@@ -1,6 +1,8 @@
 workflow:
   rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: never
 
 variables:
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
@@ -25,6 +27,8 @@ stages:
 
 build-docker-image:
   stage: build
+  # rules:
+  #   - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image: 
     name: docker:24.0.5
   services:
