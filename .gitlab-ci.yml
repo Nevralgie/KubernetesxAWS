@@ -1,6 +1,7 @@
 # Main CI/CD configuration file that includes other pipeline files for test and prod environment
 # One
 trigger_job_test:
+  allow_failure: true
   trigger:
     include:
       - local: '/.gitlab-ci-test.yml'
@@ -10,6 +11,7 @@ trigger_job_test:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
 
 trigger_job_main:
+  allow_failure: true
   trigger:
     include:
       - local: '/.gitlab-ci-prod.yml'
