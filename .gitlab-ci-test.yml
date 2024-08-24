@@ -408,7 +408,7 @@ deploy_ai_analyzer:
   needs:
   # Job dependency
     - deploy_eks
-    - monitoring
+    # - monitoring
   # when: manual
 
 
