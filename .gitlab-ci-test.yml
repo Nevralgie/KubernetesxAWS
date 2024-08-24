@@ -93,7 +93,7 @@ deploy_eks:
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
     # Create EKS cluster
-    - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --vpc-cidr $TEST_ENV_CIDR --node-type t2.xlarge --nodes $NODE_COUNT --alb-ingress-access --node-private-networking --vpc-nat-mode Single || true
+    - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --vpc-cidr $TEST_ENV_CIDR --node-type t2.xlarge --nodes $NODE_COUNT --tags "Environment=Test" --alb-ingress-access --node-private-networking --vpc-nat-mode Single || true
     # Recreate the Load Balancer policy if needed
     # # - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
     # # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
