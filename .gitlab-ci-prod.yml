@@ -1,11 +1,7 @@
 workflow:
   rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_COMMIT_REF_NAME == 'main'
 
-only:
-  - main
-  
 variables:
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
   EKS_CLUSTER_NAME: "eks-k8sgptxlocalai"
@@ -78,6 +74,8 @@ build-docker-image:
       - combinedHtmlReport.html
       - report.xml
       - .docker/config.json
+  only:
+    - main
 
 deploy_eks:
   stage: deploy
@@ -121,6 +119,8 @@ deploy_eks:
     - job: build-docker-image
       artifacts: true
 # # # #   # when: manual
+  only:
+    - main
 
 deploy_db:
   stage: deploy
@@ -168,6 +168,8 @@ deploy_db:
   tags:
     - build_job_docker
 # #   # when: manual
+  only:
+    - main
 
   
 hydrate_db:
@@ -194,7 +196,8 @@ hydrate_db:
     - job: deploy_db
       artifacts: true
 # #   # when: manual
-
+  only:
+    - main
 deploy_stock_app:
   stage: provision
   image: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
@@ -292,6 +295,8 @@ deploy_stock_app:
   tags:
     - build_job_docker
   # when: manual
+  only:
+    - main
 
 monitoring:
   stage: monitor
@@ -320,6 +325,8 @@ monitoring:
     - deploy_eks
     - deploy_stock_app
 #   # when: manual
+  only:
+    - main
 
 destroy:
   stage: destroy_infra
@@ -336,6 +343,8 @@ destroy:
   when: manual
   tags:
     - build_job_docker
+  only:
+    - main
 
 clean:
   stage: destroy_cluster
@@ -352,3 +361,5 @@ clean:
   tags:
     - build_job_docker
   when: manual
+  only:
+    - main
