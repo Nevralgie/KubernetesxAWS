@@ -17,3 +17,7 @@ output "database_name" {
   description = "The name of the database"
   value       = aws_db_instance.rds_mysql.db_name
 }
+
+output "Environment"
+  description = "Working Env"
+  value       = var.environment

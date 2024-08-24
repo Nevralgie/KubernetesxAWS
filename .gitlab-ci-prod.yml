@@ -6,6 +6,7 @@ workflow:
       when: never
 
 variables:
+  ENV: "Production"
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
   EKS_CLUSTER_NAME: "eks-k8sgptxlocalai"
   AWS_REGION: "eu-west-3"
@@ -150,8 +151,8 @@ deploy_db:
     - terraform validate
     # Supply needed secrets from Gitlab var repository
     # Deploy the RDS instance and update the network configuration with terraform
-    - terraform plan -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD"
-    - terraform apply -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" --auto-approve
+    - terraform plan -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" -var "environment=$ENV"
+    - terraform apply -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" -var "environment=$ENV" --auto-approve
     # Convert the output into yaml to be usable easier by k8s
     - terraform output -json | yq eval -P '.' > vars.yml
     - cat vars.yml
@@ -341,7 +342,7 @@ destroy:
     - cd $CI_PROJECT_DIR/Terraform_Infra
     - terraform init -backend-config=password=${TF_PASSWORD}
   script:
-    - terraform destroy -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" --auto-approve
+    - terraform destroy -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" -var "environment=$ENV" --auto-approve
   when: manual
   tags:
     - build_job_docker

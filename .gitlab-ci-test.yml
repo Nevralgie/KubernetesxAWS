@@ -6,8 +6,9 @@ workflow:
       when: never
 
 variables:
+  ENV: "Test"
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
-  EKS_CLUSTER_NAME: "eks-k8sgptxlocalai"
+  EKS_CLUSTER_NAME: "eks-k8sgptxlocalai-staging"
   AWS_REGION: "eu-west-3"
   NODE_COUNT: "2"
   ACCOUNT_ID: "$AWS_ACCOUNT_ID"
@@ -92,7 +93,7 @@ deploy_eks:
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
     # Create EKS cluster
-    - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --vpc-cidr $TEST_ENV_CIDR--node-type t2.xlarge --nodes $NODE_COUNT --alb-ingress-access --node-private-networking --vpc-nat-mode Single || true
+    - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --vpc-cidr $TEST_ENV_CIDR --node-type t2.xlarge --nodes $NODE_COUNT --alb-ingress-access --node-private-networking --vpc-nat-mode Single || true
     # Recreate the Load Balancer policy if needed
     # # - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
     # # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
@@ -149,8 +150,8 @@ deploy_db:
     - terraform validate
     # Supply needed secrets from Gitlab var repository
     # Deploy the RDS instance and update the network configuration with terraform
-    - terraform plan -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD"
-    - terraform apply -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" --auto-approve
+    - terraform plan -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" -var "environment=$ENV"
+    - terraform apply -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" -var "environment=$ENV" --auto-approve
     # Convert the output into yaml to be usable easier by k8s
     - terraform output -json | yq eval -P '.' > vars.yml
     - cat vars.yml
@@ -423,7 +424,7 @@ destroy:
     - cd $CI_PROJECT_DIR/Terraform_Infra
     - terraform init -backend-config=password=${TF_PASSWORD}
   script:
-    - terraform destroy -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" --auto-approve
+    - terraform destroy -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" -var "environment=$ENV" --auto-approve
   when: manual
   tags:
     - build_job_docker
