@@ -1,6 +1,7 @@
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+    - if: $CI_COMMIT_REF_NAME == 'features'
     - if: $CI_PIPELINE_SOURCE == "push"
       when: never
 
@@ -340,10 +341,11 @@ locust_loadtest:
     - job: deploy_stock_app
       artifacts: true
     - job: monitoring
+      artifacts: false
   # Target the docker gitlab instance
   tags:
     - build_job_docker
-  when: manual
+  # when: manual
 
 deploy_ai_analyzer:
   stage: infra_test
