@@ -72,6 +72,6 @@ test:
     include:
       - local: '/.gitlab-ci-test.yml'
   rules:
-    - if: $CI_COMMIT_BRANCH == 'main'
+    - if: $CI_COMMIT_BRANCH == 'test'
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   allow_failure: true
