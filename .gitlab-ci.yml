@@ -437,7 +437,7 @@ deploy_ai_analyzer:
 trigger_prod_pipeline:
   stage: trigger
   script:
-    - curl --request POST --form token=$TRIGGER_TOKEN --form ref=main \ "https://gitlab.example.com/api/v4/projects/Nevii/leverage-your-own-k8s-expert/trigger/pipeline"
+    - curl --request POST --form token=$TRIGGER_TOKEN --form ref=main "https://gitlab.example.com/api/v4/projects/Nevii/leverage-your-own-k8s-expert/trigger/pipeline"
   when: manual
   needs:
   # Job dependency
