@@ -46,7 +46,7 @@ trigger_pipeline:
   trigger:
     include:
       # Include the right pipeline based on the branch
-      - local: '/.gitlab-ci-prod.yml'
+      # - local: '/.gitlab-ci-prod.yml'
       - local: '/.gitlab-ci-test.yml'
   rules:
     # Trigger test pipeline for feature -> test merge requests
@@ -55,16 +55,16 @@ trigger_pipeline:
     # - if: $CI_COMMIT_BRANCH =~ /^feature\/.*$/ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'test'
   allow_failure: true
 
-# triggerjobmain:
-#   stage: trigger
-#   trigger:
-#     include:
-#       # Files for each pipeline 
-#       # - local: '/.gitlab-ci-prod.yml'
-#       - local: '/.gitlab-ci-prod.yml'
-#   rules:
-#     - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == 'test' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'main'
-#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-#     # Trigger prod pipeline for test -> main merge requests
-#     # - if: $CI_COMMIT_BRANCH == 'test' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'main'
-#   allow_failure: true
+triggerjobmain:
+  stage: trigger
+  trigger:
+    include:
+      # Files for each pipeline 
+      # - local: '/.gitlab-ci-prod.yml'
+      - local: '/.gitlab-ci-prod.yml'
+  rules:
+    # - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == 'test' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'main'
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    # Trigger prod pipeline for test -> main merge requests
+    # - if: $CI_COMMIT_BRANCH == 'test' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'main'
+  allow_failure: true
