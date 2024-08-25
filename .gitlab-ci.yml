@@ -13,7 +13,7 @@ workflow:
 
 stages:
   - trigger
-#ouiouioui
+#ouiouiouioui
 # trigger_main_pipeline:
 #   stage: trigger
 #   trigger:
