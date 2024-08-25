@@ -1,6 +1,7 @@
-# workflow:
-#   rules:
-#    - if: $CI_PIPELINE_ID
+workflow:
+  rules:
+    - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == 'test' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'main'
+    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
 
 variables:
   ENV: "production"
@@ -16,19 +17,19 @@ variables:
   PROD_ENV_CIDR: "10.0.0.0/16"
 
 stages:
-  - build
+  - build_prod
   - deploy
   - provision
   - monitor
-  - infra_test
   - destroy_infra
   - destroy_cluster
 
 build-docker-image:
-  stage: build
+  stage: build_prod
   rules:
-    - if: $CI_COMMIT_BRANCH == 'main'
-    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+   - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == 'test' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'main'
+  #  - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == 'test'
+   - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image: 
     name: docker:24.0.5
   services:
@@ -79,9 +80,14 @@ build-docker-image:
       - combinedHtmlReport.html
       - report.xml
       - .docker/config.json
+  # only: 
+  #   - main
  
 deploy_eks:
   stage: deploy
+  # rules:
+  # # #   - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == 'test'
+  #   - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   environment:
@@ -122,9 +128,14 @@ deploy_eks:
     - job: build-docker-image
       artifacts: true
 # # # #   # when: manual
-
+  # only: 
+  #   - main
+ 
 deploy_db:
   stage: deploy
+  # rules:
+  # # #   - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == 'test'
+  #   - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   environment:
@@ -169,11 +180,17 @@ deploy_db:
   tags:
     - build_job_docker
 # #   # when: manual
+  # only: 
+  #   - main
+ 
 
 
   
 hydrate_db:
   stage: provision
+  # rules:
+  # # #   - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == 'test'
+  #   - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   # image: python:3.9.17-slim-bullseye
   before_script:
     # Export credentials (optional if the dev pipeline has been launched before)
@@ -196,9 +213,15 @@ hydrate_db:
     - job: deploy_db
       artifacts: true
 # #   # when: manual
+  # only: 
+  #   - main
+ 
 
 deploy_stock_app:
   stage: provision
+  # rules:
+  # # #   - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == 'test'
+  #   - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   before_script:
     # Install the necessary packages to use the exported yaml artifacts values in the files
@@ -294,10 +317,16 @@ deploy_stock_app:
   tags:
     - build_job_docker
   # when: manual
+  # only: 
+  #   - main
+ 
   
 
 monitoring:
   stage: monitor
+  # rules:
+  # # #   - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == 'test'
+  #   - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   script:
@@ -323,105 +352,15 @@ monitoring:
     - deploy_eks
     - deploy_stock_app
 #   # when: manual
+  # only: 
+  #   - main
+ 
   
-
-# # Job to run the load test using the DNS fetched in the previous job
-# locust_loadtest:
-#   stage: infra_test
-#   image: python:3.9-slim
-#   before_script: 
-#     # Add & Install locust packages from the python library
-#     - pip install locust
-#   script:
-#     # Wait for the load balancer to be up and running
-#     - sleep 120
-#     # Use the .env file from deploy app job as environment variable source
-#     - source lb_dns.env
-#     # Launch locust load test against extracted alb dns name value - 100 users simulated for 5 minutes requesting the index of the app
-#     - locust -f $CI_PROJECT_DIR/Locust/locustfile.py --headless --users 100 --spawn-rate 10 --run-time 5m --host=http://$LB_DNS
-#   needs:
-#     # Job dependency, with artifact import enabled from them
-#     - job: deploy_stock_app
-#       artifacts: true
-#     - job: monitoring
-#       artifacts: false
-#   # Target the docker gitlab instance
-#   tags:
-#     - build_job_docker
-#   # Runs only for the test branch
-#   # only:
-#   #   - test
-#   # when: manual
-
-# deploy_ai_analyzer:
-#   stage: infra_test
-#   image:
-#     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
-#   script:
-#     # Make sur you are authentified to aws account with access to EKS endpoint
-#     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-#     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-#     - aws configure set region $AWS_REGION
-#     # Set the EKS cluster endpoint as target for kubectl commands
-#     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-#     # Add & install k8sgpt packages with Hekm
-#     - helm repo add k8sgpt https://charts.k8sgpt.ai/ || true
-#     - helm repo update
-#     # Verify adding of k8sgpt packages
-#     - helm list --all-namespaces
-#     # # For maintenance purposes, crd of k8sgpt need to be removed before attempting to update
-#     - kubectl delete crd k8sgpts.core.k8sgpt.ai || true
-#     - helm uninstall release --namespace k8sgpt-operator-system || true
-#     # Install k8sgpt package release
-#     - helm install release k8sgpt/k8sgpt-operator -n k8sgpt-operator-system --create-namespace || true
-#     # Create secret from openAI token value
-#     - kubectl create secret generic k8sgpt-secret --from-literal=openai-api-key=$OPENAI_TOKEN -n k8sgpt-operator-system || true
-#     # # Create the cr for the k8sgpt operator
-#     # # Results of cluster analysis will be available as results resources in the operator namespace
-#     - kubectl apply -f $CI_PROJECT_DIR/K8s/manifests/k8sgpt_cluster_operator/k8sgpt_operator.yml --dry-run=client -o yaml | kubectl apply -f -
-#     # This loop extracts results from k8sgpt Analyzer 
-#     - | 
-#       while true; do
-#         # Try to run the command and register the error output in stdout if there is one 
-#         OUTPUT=$(kubectl get results -n k8sgpt-operator-system -o json | jq . 2>&1)
-
-#         # Check if the command was successful by searching for the "openai" string in the command output
-#         if echo "$OUTPUT" | grep -q "openai"; then
-#           # If there openai output (specific to the results here), loop ends
-#           break
-#         fi
-
-#         # If there is an error, print a message and retry after a set delay
-#         echo "Resource not available yet, retrying in 5 seconds..."
-#         sleep 5
-#       done
-#     - echo "$OUTPUT" > k8sresults.json
-#     # Delete the deployment by deleting the crd when results resources are created
-#     # OpenAi API does cost around 7e-5 
-#     # K8sgpt analyses the cluster non stop otherwise
-#     - kubectl delete crd k8sgpts.core.k8sgpt.ai
-#   # Target the docker gitlab instance
-#     - helm uninstall release --namespace k8sgpt-operator-system || true
-#   tags:
-#     - build_job_docker
-#   artifacts:
-#     untracked: false
-#     when: on_success
-#     access: developer
-#     expire_in: 30 days
-#     paths:
-#       - $CI_PROJECT_DIR/k8sresults.json
-#   needs:
-#   # Job dependency
-#     - deploy_eks
-#     - monitoring
-#   # Runs only for the test branch
-#   # only:
-#   #   - test
-#   # when: manual
-
 destroy:
   stage: destroy_infra
+  # rules:
+  # # #   - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == 'test'
+  #   - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   before_script:
@@ -435,11 +374,12 @@ destroy:
   when: manual
   tags:
     - build_job_docker
-  only:
-    - main
 
 clean:
   stage: destroy_cluster
+  # rules:
+  # # #   - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == 'test'
+  #   - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   script:
@@ -453,5 +393,3 @@ clean:
   tags:
     - build_job_docker
   when: manual
-  only:
-    - main
