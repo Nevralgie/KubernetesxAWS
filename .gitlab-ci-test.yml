@@ -128,6 +128,7 @@ deploy_eks:
 # # # #   # when: manual
   only:
     - test
+    - features1
 
 deploy_db:
   stage: deploy
@@ -177,6 +178,7 @@ deploy_db:
 # #   # when: manual
   only:
     - test
+    - features1
 
   
 hydrate_db:
@@ -205,6 +207,7 @@ hydrate_db:
 # #   # when: manual
   only:
     - test
+    - features1
 
 deploy_stock_app:
   stage: provision
@@ -305,6 +308,7 @@ deploy_stock_app:
   # when: manual
   only:
     - test
+    - features1
 
 monitoring:
   stage: monitor
@@ -335,6 +339,7 @@ monitoring:
 #   # when: manual
   only:
     - test
+    - features1
 
 # Job to run the load test using the DNS fetched in the previous job
 locust_loadtest:
@@ -362,6 +367,7 @@ locust_loadtest:
   # Runs only for the test branch
   only:
     - test
+    - features1
   # when: manual
 
 deploy_ai_analyzer:
@@ -429,6 +435,7 @@ deploy_ai_analyzer:
   # Runs only for the test branch
   only:
     - test
+    - features1
 #   # when: manual
 
 destroy:
