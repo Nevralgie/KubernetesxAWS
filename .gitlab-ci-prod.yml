@@ -125,7 +125,7 @@ deploy_eks:
       artifacts: true
 # # # #   # when: manual
   only: 
-    -main
+    - main
  
 deploy_db:
   stage: deploy
@@ -174,7 +174,7 @@ deploy_db:
     - build_job_docker
 # #   # when: manual
   only: 
-    -main
+    - main
  
 
 
@@ -204,7 +204,7 @@ hydrate_db:
       artifacts: true
 # #   # when: manual
   only: 
-    -main
+    - main
  
 
 deploy_stock_app:
@@ -305,7 +305,7 @@ deploy_stock_app:
     - build_job_docker
   # when: manual
   only: 
-    -main
+    - main
  
   
 
@@ -337,7 +337,7 @@ monitoring:
     - deploy_stock_app
 #   # when: manual
   only: 
-    -main
+    - main
  
   
 destroy:
