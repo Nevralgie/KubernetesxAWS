@@ -53,8 +53,8 @@ stages:
 
 main:
   stage: trigger
-  variables:
-    PIPELINE_PARENT_ID : $CI_PIPELINE_ID
+  # variables:
+  #   PIPELINE_PARENT_ID : $CI_PIPELINE_ID
   trigger:
     include:
       - local: '/.gitlab-ci-prod.yml'
