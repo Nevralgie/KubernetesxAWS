@@ -51,7 +51,7 @@ stages:
 #       when: never
 #     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
 
-main:
+triggerjob:
   stage: trigger
   # variables:
   #   PIPELINE_PARENT_ID : $CI_PIPELINE_ID
