@@ -82,6 +82,7 @@ build-docker-image:
       - .docker/config.json
   only:
     - test
+    - features1
 
 deploy_eks:
   stage: deploy
