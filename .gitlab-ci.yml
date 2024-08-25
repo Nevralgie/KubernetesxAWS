@@ -1,24 +1,24 @@
-# Main CI/CD configuration file that includes other pipeline files for test and prod environment
-# Only triggers for a merge request
-workflow:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+# # Main CI/CD configuration file that includes other pipeline files for test and prod environment
+# # Only triggers for a merge request
+# workflow:
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
-stages:
-  - trigger
+# stages:
+#   - trigger
 
-triggerjobtest:
-  stage: trigger
-  trigger:
-    include:
-      # Files for each pipeline 
-      - local: '/.gitlab-ci-prod.yml'
-      - local: '/.gitlab-ci-test.yml'
-  rules:
-    # - if: $CI_COMMIT_BRANCH == 'test'
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    # - if: $CI_COMMIT_BRANCH == 'test'
-  allow_failure: true
+# triggerjobtest:
+#   stage: trigger
+#   trigger:
+#     include:
+#       # Files for each pipeline 
+#       - local: '/.gitlab-ci-prod.yml'
+#       - local: '/.gitlab-ci-test.yml'
+#   rules:
+#     # - if: $CI_COMMIT_BRANCH == 'test'
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+#     # - if: $CI_COMMIT_BRANCH == 'test'
+#   allow_failure: true
 
 # triggerjobmain:
 #   stage: trigger
@@ -32,3 +32,31 @@ triggerjobtest:
 #     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 #   allow_failure: true
 
+# Main CI/CD configuration
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+stages:
+  - trigger
+
+# Trigger Job to include appropriate pipeline based on branch
+trigger_pipeline:
+  stage: trigger
+  trigger:
+    include:
+      # Include the right pipeline based on the branch
+      - local: '/.gitlab-ci-prod.yml'
+        when: manual
+        rules:
+          - if: $CI_COMMIT_BRANCH == 'main' && $CI_PIPELINE_SOURCE == "merge_request_event"
+      - local: '/.gitlab-ci-test.yml'
+        when: manual
+        rules:
+          - if: $CI_COMMIT_BRANCH == 'test' && $CI_PIPELINE_SOURCE == "merge_request_event"
+  rules:
+    # Trigger test pipeline for feature -> test merge requests
+    - if: $CI_COMMIT_BRANCH =~ /^feature\/.*$/ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'test'
+    # Trigger prod pipeline for test -> main merge requests
+    - if: $CI_COMMIT_BRANCH == 'test' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'main'
+  allow_failure: false
