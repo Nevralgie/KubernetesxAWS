@@ -1,7 +1,7 @@
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
-    - if: $CI_COMMIT_BRANCH == 'main'
+    # - if: $CI_COMMIT_BRANCH == 'main'
 
 variables:
   ENV: "production"
