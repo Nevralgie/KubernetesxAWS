@@ -76,6 +76,7 @@ trigger_test_pipeline:
     include:
       - local: '/.gitlab-ci-test.yml'
   rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == 'test'
       changes:
         - '**/*'  # Trigger on any file change
