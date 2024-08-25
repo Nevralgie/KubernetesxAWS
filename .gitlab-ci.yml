@@ -19,7 +19,7 @@ trigger_job_main:
     - if: $CI_PIPELINE_SOURCE == "push"
       when: never
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $$CI_COMMIT_BRANCH == 'main'
+    - if: $CI_COMMIT_BRANCH == 'main'
 
 # trigger_job_main:
 #   allow_failure: true
