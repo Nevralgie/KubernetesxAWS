@@ -1,18 +1,18 @@
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: never
+    - if: $CI_MERGE_REQUEST_ID
 
 variables:
+  ENV: "test"
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
-  EKS_CLUSTER_NAME: "eks-k8sgptxlocalai"
+  EKS_CLUSTER_NAME: "eks-k8sgptxlocalai-stage-env"
   AWS_REGION: "eu-west-3"
   NODE_COUNT: "2"
   ACCOUNT_ID: "$AWS_ACCOUNT_ID"
   DOCKER_IMAGE: "app_temoin"
   APP_INGRESS_NAME: ingress-stock-app
-  APP_VERSION: "1.0.6"
+  APP_VERSION: "1.0.8"
   OPENAI_TOKEN: "$OPENAI_TOKEN"
   TEST_ENV_CIDR: "172.16.0.0/16"
 
@@ -40,6 +40,7 @@ build-docker-image:
     # Create a separate docker network for testing
     - docker network create test_env
   script:
+    - echo "Pass"
     # Build a first test image
     # Unit tests are integrated into the Dockerfile build
     - docker build --target build -t $CI_REGISTRY/$DOCKER_IMAGE:test ./app
@@ -91,7 +92,7 @@ deploy_eks:
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
     # Create EKS cluster
-    - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --vpc-cidr $TEST_ENV_CIDR--node-type t2.xlarge --nodes $NODE_COUNT --alb-ingress-access --node-private-networking --vpc-nat-mode Single || true
+    - eksctl create cluster --name $EKS_CLUSTER_NAME --version 1.29 --vpc-cidr $TEST_ENV_CIDR --node-type t2.xlarge --nodes $NODE_COUNT --tags "Environment=Test" --alb-ingress-access --node-private-networking --vpc-nat-mode Single || true
     # Recreate the Load Balancer policy if needed
     # # - curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
     # # - aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
@@ -148,8 +149,8 @@ deploy_db:
     - terraform validate
     # Supply needed secrets from Gitlab var repository
     # Deploy the RDS instance and update the network configuration with terraform
-    - terraform plan -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD"
-    - terraform apply -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" --auto-approve
+    - terraform plan -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" -var "environment=$ENV"
+    - terraform apply -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" -var "environment=$ENV" --auto-approve
     # Convert the output into yaml to be usable easier by k8s
     - terraform output -json | yq eval -P '.' > vars.yml
     - cat vars.yml
@@ -340,10 +341,14 @@ locust_loadtest:
     - job: deploy_stock_app
       artifacts: true
     - job: monitoring
+      artifacts: false
   # Target the docker gitlab instance
   tags:
     - build_job_docker
-  when: manual
+  # Runs only for the test branch
+  only:
+    - test
+  # when: manual
 
 deploy_ai_analyzer:
   stage: infra_test
@@ -407,8 +412,10 @@ deploy_ai_analyzer:
   # Job dependency
     - deploy_eks
     - monitoring
-  # when: manual
-
+  # Runs only for the test branch
+  only:
+    - test
+#   # when: manual
 
 destroy:
   stage: destroy_infra
@@ -421,7 +428,7 @@ destroy:
     - cd $CI_PROJECT_DIR/Terraform_Infra
     - terraform init -backend-config=password=${TF_PASSWORD}
   script:
-    - terraform destroy -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" --auto-approve
+    - terraform destroy -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" -var "environment=$ENV" --auto-approve
   when: manual
   tags:
     - build_job_docker
