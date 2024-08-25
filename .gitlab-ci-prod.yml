@@ -80,7 +80,7 @@ build-docker-image:
       - report.xml
       - .docker/config.json
   only: 
-    -main
+    - main
  
 deploy_eks:
   stage: deploy
