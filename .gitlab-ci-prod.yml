@@ -26,9 +26,9 @@ stages:
 
 build-docker-image:
   stage: build_prod
-  rules:
-   - if: $CI_COMMIT_BRANCH == 'main'
-   - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+  # rules:
+  #  - if: $CI_COMMIT_BRANCH == 'main'
+  #  - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image: 
     name: docker:24.0.5
   services:
@@ -79,8 +79,8 @@ build-docker-image:
       - combinedHtmlReport.html
       - report.xml
       - .docker/config.json
-  # only: 
-  #   - main
+  only: 
+    - main
  
 deploy_eks:
   stage: deploy
@@ -127,8 +127,8 @@ deploy_eks:
     - job: build-docker-image
       artifacts: true
 # # # #   # when: manual
-  # only: 
-  #   - main
+  only: 
+    - main
  
 deploy_db:
   stage: deploy
@@ -179,8 +179,8 @@ deploy_db:
   tags:
     - build_job_docker
 # #   # when: manual
-  # only: 
-  #   - main
+  only: 
+    - main
  
 
 
@@ -212,8 +212,8 @@ hydrate_db:
     - job: deploy_db
       artifacts: true
 # #   # when: manual
-  # only: 
-  #   - main
+  only: 
+    - main
  
 
 deploy_stock_app:
@@ -316,8 +316,8 @@ deploy_stock_app:
   tags:
     - build_job_docker
   # when: manual
-  # only: 
-  #   - main
+  only: 
+    - main
  
   
 
@@ -351,8 +351,8 @@ monitoring:
     - deploy_eks
     - deploy_stock_app
 #   # when: manual
-  # only: 
-  #   - main
+  only: 
+    - main
  
   
 destroy:

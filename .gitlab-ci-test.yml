@@ -27,9 +27,9 @@ stages:
 
 build-docker-image:
   stage: build_stage
-  rules: 
-    - if: $CI_COMMIT_BRANCH == 'test'
-    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+  # rules: 
+  #   - if: $CI_COMMIT_BRANCH == 'test'
+  #   - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image: 
     name: docker:24.0.5
   services:
@@ -81,8 +81,8 @@ build-docker-image:
       - combinedHtmlReport.html
       - report.xml
       - .docker/config.json
-  # only:
-  #   - test
+  only:
+    - test
   #   - features1
 
 deploy_eks:
@@ -130,8 +130,8 @@ deploy_eks:
     - job: build-docker-image
       artifacts: true
 # # # #   # when: manual
-  # only:
-  #   - test
+  only:
+    - test
   #   - features1
 
 deploy_db:
@@ -183,8 +183,8 @@ deploy_db:
   tags:
     - build_job_docker
 # #   # when: manual
-  # only:
-  #   - test
+  only:
+    - test
   #   - features1
 
   
@@ -215,8 +215,8 @@ hydrate_db:
     - job: deploy_db
       artifacts: true
 # #   # when: manual
-  # only:
-  #   - test
+  only:
+    - test
   #   - features1
 
 deploy_stock_app:
@@ -319,8 +319,8 @@ deploy_stock_app:
   tags:
     - build_job_docker
   # when: manual
-  # only:
-  #   - test
+  only:
+    - test
   #   - features1
 
 monitoring:
@@ -353,8 +353,8 @@ monitoring:
     - deploy_eks
     - deploy_stock_app
 #   # when: manual
-  # only:
-  #   - test
+  only:
+    - test
   #   - features1
 
 # Job to run the load test using the DNS fetched in the previous job
@@ -384,8 +384,8 @@ locust_loadtest:
   tags:
     - build_job_docker
   # Runs only for the test branch
-  # only:
-  #   - test
+  only:
+    - test
   #   - features1
   # when: manual
 
@@ -455,8 +455,8 @@ deploy_ai_analyzer:
     - deploy_eks
     - monitoring
   # Runs only for the test branch
-  # only:
-  #   - test
+  only:
+    - test
   #   - features1
 #   # when: manual
 
