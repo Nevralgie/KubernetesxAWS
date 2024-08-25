@@ -15,7 +15,7 @@ workflow:
 
 stages:
   - trigger
-
+#oui
 # trigger_main_pipeline:
 #   stage: trigger
 #   trigger:
