@@ -1,6 +1,6 @@
 workflow:
   rules:
-    # - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == 'test'
+    - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == 'test' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'main'
     - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
 
 variables:
@@ -27,6 +27,7 @@ stages:
 build-docker-image:
   stage: build_prod
   rules:
+   - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == 'test' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'main'
   #  - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == 'test'
    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image: 
