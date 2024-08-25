@@ -1,6 +1,6 @@
 workflow:
   rules:
-    - if: $CI_COMMIT_BRANCH =~ /^feature\/.*$/ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'test'
+    # # - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == '~ /^feature\/.*$/'
     - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
 
 variables:
@@ -28,7 +28,7 @@ stages:
 build-docker-image:
   stage: build_stage
   rules: 
-    - if: $CI_COMMIT_BRANCH =~ /^feature\/.*$/ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'test'
+    # - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == '~ /^feature\/.*$/'
     - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image: 
     name: docker:24.0.5
@@ -88,7 +88,7 @@ build-docker-image:
 deploy_eks:
   stage: deploy
   rules: 
-    - if: $CI_COMMIT_BRANCH =~ /^feature\/.*$/ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'test'
+    if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == '~ /^feature\/.*$/'
     # - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
@@ -137,7 +137,7 @@ deploy_eks:
 deploy_db:
   stage: deploy
   rules: 
-    - if: $CI_COMMIT_BRANCH =~ /^feature\/.*$/ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'test'
+    if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == '~ /^feature\/.*$/'
     # - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
@@ -191,7 +191,7 @@ deploy_db:
 hydrate_db:
   stage: provision
   rules: 
-    - if: $CI_COMMIT_BRANCH =~ /^feature\/.*$/ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'test'
+    if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == '~ /^feature\/.*$/'
     # - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   # image: python:3.9.17-slim-bullseye
   before_script:
@@ -222,7 +222,7 @@ hydrate_db:
 deploy_stock_app:
   stage: provision
   rules: 
-    - if: $CI_COMMIT_BRANCH =~ /^feature\/.*$/ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'test'
+    if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == '~ /^feature\/.*$/'
     # - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   before_script:
@@ -326,7 +326,7 @@ deploy_stock_app:
 monitoring:
   stage: monitor
   rules: 
-    - if: $CI_COMMIT_BRANCH =~ /^feature\/.*$/ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'test'
+    if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == '~ /^feature\/.*$/'
     # - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
@@ -361,7 +361,7 @@ monitoring:
 locust_loadtest:
   stage: infra_test
   rules: 
-    - if: $CI_COMMIT_BRANCH =~ /^feature\/.*$/ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'test'
+    if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == '~ /^feature\/.*$/'
     # - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image: python:3.9-slim
   before_script: 
@@ -392,7 +392,7 @@ locust_loadtest:
 deploy_ai_analyzer:
   stage: infra_test
   rules: 
-    - if: $CI_COMMIT_BRANCH =~ /^feature\/.*$/ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'test'
+    if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == '~ /^feature\/.*$/'
     # - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
@@ -463,7 +463,7 @@ deploy_ai_analyzer:
 destroy:
   stage: destroy_infra
   rules: 
-    - if: $CI_COMMIT_BRANCH =~ /^feature\/.*$/ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'test'
+    if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == '~ /^feature\/.*$/'
     # - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
@@ -482,7 +482,7 @@ destroy:
 clean:
   stage: destroy_cluster
   rules: 
-    - if: $CI_COMMIT_BRANCH =~ /^feature\/.*$/ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'test'
+    if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == '~ /^feature\/.*$/'
     # - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
