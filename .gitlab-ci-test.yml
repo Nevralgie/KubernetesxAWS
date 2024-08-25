@@ -125,6 +125,8 @@ deploy_eks:
     - job: build-docker-image
       artifacts: true
 # # # #   # when: manual
+  only:
+    - test
 
 deploy_db:
   stage: deploy
@@ -172,6 +174,8 @@ deploy_db:
   tags:
     - build_job_docker
 # #   # when: manual
+  only:
+    - test
 
   
 hydrate_db:
@@ -198,6 +202,8 @@ hydrate_db:
     - job: deploy_db
       artifacts: true
 # #   # when: manual
+  only:
+    - test
 
 deploy_stock_app:
   stage: provision
@@ -296,6 +302,8 @@ deploy_stock_app:
   tags:
     - build_job_docker
   # when: manual
+  only:
+    - test
 
 monitoring:
   stage: monitor
@@ -324,6 +332,8 @@ monitoring:
     - deploy_eks
     - deploy_stock_app
 #   # when: manual
+  only:
+    - test
 
 # Job to run the load test using the DNS fetched in the previous job
 locust_loadtest:
