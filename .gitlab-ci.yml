@@ -5,10 +5,7 @@ trigger_job_test:
     include:
       - local: '/.gitlab-ci-test.yml'
   rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: never
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_COMMIT_BRANCH == 'test'
 
 trigger_job_main:
   allow_failure: true
@@ -16,10 +13,7 @@ trigger_job_main:
     include:
       - local: '/.gitlab-ci-prod.yml'
   rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: never
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_COMMIT_BRANCH == 'main'
 
 # trigger_job_main:
 #   allow_failure: true
