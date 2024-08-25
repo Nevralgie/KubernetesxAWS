@@ -1,3 +1,7 @@
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+
 variables:
   ENV: "test"
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
@@ -24,7 +28,7 @@ build-docker-image:
   stage: build
   rules: 
     - if: $CI_COMMIT_BRANCH == 'test'
-    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+    # - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image: 
     name: docker:24.0.5
   services:
@@ -84,7 +88,7 @@ deploy_eks:
   stage: deploy
   rules: 
     - if: $CI_COMMIT_BRANCH == 'test'
-    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+    # - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   environment:
@@ -133,7 +137,7 @@ deploy_db:
   stage: deploy
   rules: 
     - if: $CI_COMMIT_BRANCH == 'test'
-    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+    # - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   environment:
@@ -187,7 +191,7 @@ hydrate_db:
   stage: provision
   rules: 
     - if: $CI_COMMIT_BRANCH == 'test'
-    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+    # - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   # image: python:3.9.17-slim-bullseye
   before_script:
     # Export credentials (optional if the dev pipeline has been launched before)
@@ -218,7 +222,7 @@ deploy_stock_app:
   stage: provision
   rules: 
     - if: $CI_COMMIT_BRANCH == 'test'
-    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+    # - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   before_script:
     # Install the necessary packages to use the exported yaml artifacts values in the files
@@ -322,7 +326,7 @@ monitoring:
   stage: monitor
   rules: 
     - if: $CI_COMMIT_BRANCH == 'test'
-    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+    # - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   script:
@@ -357,7 +361,7 @@ locust_loadtest:
   stage: infra_test
   rules: 
     - if: $CI_COMMIT_BRANCH == 'test'
-    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+    # - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image: python:3.9-slim
   before_script: 
     # Add & Install locust packages from the python library
@@ -388,7 +392,7 @@ deploy_ai_analyzer:
   stage: infra_test
   rules: 
     - if: $CI_COMMIT_BRANCH == 'test'
-    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+    # - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   script:
@@ -459,7 +463,7 @@ destroy:
   stage: destroy_infra
   rules: 
     - if: $CI_COMMIT_BRANCH == 'test'
-    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+    # - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   before_script:
@@ -478,7 +482,7 @@ clean:
   stage: destroy_cluster
   rules: 
     - if: $CI_COMMIT_BRANCH == 'test'
-    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+    # - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   script:
