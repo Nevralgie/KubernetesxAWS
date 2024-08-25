@@ -214,10 +214,10 @@ deploy_stock_app:
     - chmod +x /usr/local/bin/yq
   script:
     - echo "test"
-    # Set the cluster endpoint as target for kubectl commands
-    - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-    # Use the artifact from build job to authenticate to the Gitlab container registry and pull the docker image built
-    # The extracted values will be used to create a kubernetes secret
+    # # Set the cluster endpoint as target for kubectl commands
+    # - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+    # # Use the artifact from build job to authenticate to the Gitlab container registry and pull the docker image built
+    # # The extracted values will be used to create a kubernetes secret
     # - |
     #   cat <<EOF > gitlab_secret.yml
     #   apiVersion: v1
