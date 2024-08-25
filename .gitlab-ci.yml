@@ -2,11 +2,11 @@
 trigger_job_main:
   allow_failure: true
   trigger:
-    include:
-      - local: '/.gitlab-ci-prod.yml'
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    # - if: $CI_COMMIT_BRANCH == 'main'
+    - if: $CI_COMMIT_BRANCH == 'main'
+  include:
+      - local: '/.gitlab-ci-prod.yml'
 
 # trigger_job_test:
 #   allow_failure: true
