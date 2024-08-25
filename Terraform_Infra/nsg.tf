@@ -6,7 +6,7 @@ resource "aws_security_group" "rds_sg" {
 
 resource "aws_vpc_security_group_ingress_rule" "allow_mysql" {
   security_group_id = aws_security_group.rds_sg.id
-  cidr_ipv4         = "192.168.0.0/16"
+  cidr_ipv4         = var.environment == "production" ? "10.0.0.0/16" : "172.16.0.0/16"
   from_port         = 3306
   ip_protocol       = "tcp"
   to_port           = 3306
