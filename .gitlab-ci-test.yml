@@ -1,7 +1,7 @@
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
-    # - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_MERGE_REQUEST_ID
 
 variables:
   ENV: "test"
