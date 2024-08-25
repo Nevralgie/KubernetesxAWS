@@ -28,7 +28,7 @@ build-docker-image:
   stage: build_prod
   rules:
    - if: $CI_COMMIT_BRANCH == 'test' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'main'
-  #  - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+   - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image: 
     name: docker:24.0.5
   services:
