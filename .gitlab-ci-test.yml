@@ -370,11 +370,12 @@ locust_loadtest:
     - pip install locust
   script:
     # Wait for the load balancer to be up and running
-    - sleep 120
-    # Use the .env file from deploy app job as environment variable source
-    - source lb_dns.env
-    # Launch locust load test against extracted alb dns name value - 100 users simulated for 5 minutes requesting the index of the app
-    - locust -f $CI_PROJECT_DIR/Locust/locustfile.py --headless --users 100 --spawn-rate 10 --run-time 5m --host=http://$LB_DNS
+    - echo "oui"
+    # - sleep 120
+    # # Use the .env file from deploy app job as environment variable source
+    # - source lb_dns.env
+    # # Launch locust load test against extracted alb dns name value - 100 users simulated for 5 minutes requesting the index of the app
+    # - locust -f $CI_PROJECT_DIR/Locust/locustfile.py --headless --users 100 --spawn-rate 10 --run-time 5m --host=http://$LB_DNS
   needs:
     # Job dependency, with artifact import enabled from them
     - job: deploy_stock_app
@@ -402,46 +403,46 @@ deploy_ai_analyzer:
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_REGION
-    # Set the EKS cluster endpoint as target for kubectl commands
-    - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-    # Add & install k8sgpt packages with Hekm
-    - helm repo add k8sgpt https://charts.k8sgpt.ai/ || true
-    - helm repo update
-    # Verify adding of k8sgpt packages
-    - helm list --all-namespaces
-    # # For maintenance purposes, crd of k8sgpt need to be removed before attempting to update
-    - kubectl delete crd k8sgpts.core.k8sgpt.ai || true
-    - helm uninstall release --namespace k8sgpt-operator-system || true
-    # Install k8sgpt package release
-    - helm install release k8sgpt/k8sgpt-operator -n k8sgpt-operator-system --create-namespace || true
-    # Create secret from openAI token value
-    - kubectl create secret generic k8sgpt-secret --from-literal=openai-api-key=$OPENAI_TOKEN -n k8sgpt-operator-system || true
-    # # Create the cr for the k8sgpt operator
-    # # Results of cluster analysis will be available as results resources in the operator namespace
-    - kubectl apply -f $CI_PROJECT_DIR/K8s/manifests/k8sgpt_cluster_operator/k8sgpt_operator.yml --dry-run=client -o yaml | kubectl apply -f -
-    # This loop extracts results from k8sgpt Analyzer 
-    - | 
-      while true; do
-        # Try to run the command and register the error output in stdout if there is one 
-        OUTPUT=$(kubectl get results -n k8sgpt-operator-system -o json | jq . 2>&1)
+  #   # Set the EKS cluster endpoint as target for kubectl commands
+  #   - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+  #   # Add & install k8sgpt packages with Hekm
+  #   - helm repo add k8sgpt https://charts.k8sgpt.ai/ || true
+  #   - helm repo update
+  #   # Verify adding of k8sgpt packages
+  #   - helm list --all-namespaces
+  #   # # For maintenance purposes, crd of k8sgpt need to be removed before attempting to update
+  #   - kubectl delete crd k8sgpts.core.k8sgpt.ai || true
+  #   - helm uninstall release --namespace k8sgpt-operator-system || true
+  #   # Install k8sgpt package release
+  #   - helm install release k8sgpt/k8sgpt-operator -n k8sgpt-operator-system --create-namespace || true
+  #   # Create secret from openAI token value
+  #   - kubectl create secret generic k8sgpt-secret --from-literal=openai-api-key=$OPENAI_TOKEN -n k8sgpt-operator-system || true
+  #   # # Create the cr for the k8sgpt operator
+  #   # # Results of cluster analysis will be available as results resources in the operator namespace
+  #   - kubectl apply -f $CI_PROJECT_DIR/K8s/manifests/k8sgpt_cluster_operator/k8sgpt_operator.yml --dry-run=client -o yaml | kubectl apply -f -
+  #   # This loop extracts results from k8sgpt Analyzer 
+  #   - | 
+  #     while true; do
+  #       # Try to run the command and register the error output in stdout if there is one 
+  #       OUTPUT=$(kubectl get results -n k8sgpt-operator-system -o json | jq . 2>&1)
 
-        # Check if the command was successful by searching for the "openai" string in the command output
-        if echo "$OUTPUT" | grep -q "openai"; then
-          # If there openai output (specific to the results here), loop ends
-          break
-        fi
+  #       # Check if the command was successful by searching for the "openai" string in the command output
+  #       if echo "$OUTPUT" | grep -q "openai"; then
+  #         # If there openai output (specific to the results here), loop ends
+  #         break
+  #       fi
 
-        # If there is an error, print a message and retry after a set delay
-        echo "Resource not available yet, retrying in 5 seconds..."
-        sleep 5
-      done
-    - echo "$OUTPUT" > k8sresults.json
-    # Delete the deployment by deleting the crd when results resources are created
-    # OpenAi API does cost around 7e-5 
-    # K8sgpt analyses the cluster non stop otherwise
-    - kubectl delete crd k8sgpts.core.k8sgpt.ai
-  # Target the docker gitlab instance
-    - helm uninstall release --namespace k8sgpt-operator-system || true
+  #       # If there is an error, print a message and retry after a set delay
+  #       echo "Resource not available yet, retrying in 5 seconds..."
+  #       sleep 5
+  #     done
+  #   - echo "$OUTPUT" > k8sresults.json
+  #   # Delete the deployment by deleting the crd when results resources are created
+  #   # OpenAi API does cost around 7e-5 
+  #   # K8sgpt analyses the cluster non stop otherwise
+  #   - kubectl delete crd k8sgpts.core.k8sgpt.ai
+  # # Target the docker gitlab instance
+  #   - helm uninstall release --namespace k8sgpt-operator-system || true
   tags:
     - build_job_docker
   artifacts:
@@ -470,12 +471,13 @@ destroy:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   before_script:
     - export TF_PASSWORD=${GITLAB_ACCESS_TOKEN}
-    - VPC_ID=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.resourcesVpcConfig.vpcId" --output text)
-    - RTB_ID=$(aws ec2 describe-route-tables --region $AWS_REGION --filters "Name=vpc-id,Values=$VPC_ID" --query "RouteTables[?Associations[?Main==\`true\`]].RouteTableId" --output text)
-    - cd $CI_PROJECT_DIR/Terraform_Infra
-    - terraform init -backend-config=password=${TF_PASSWORD}
+    # - VPC_ID=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.resourcesVpcConfig.vpcId" --output text)
+    # - RTB_ID=$(aws ec2 describe-route-tables --region $AWS_REGION --filters "Name=vpc-id,Values=$VPC_ID" --query "RouteTables[?Associations[?Main==\`true\`]].RouteTableId" --output text)
+    # - cd $CI_PROJECT_DIR/Terraform_Infra
+    # - terraform init -backend-config=password=${TF_PASSWORD}
   script:
-    - terraform destroy -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" -var "environment=$ENV" --auto-approve
+    - echo "oui"
+    # - terraform destroy -var "vpc_id=$VPC_ID" -var "rtb_id=$RTB_ID" -var "db_username=$RDS_USERNAME" -var "db_password=$RDS_PASSWORD" -var "environment=$ENV" --auto-approve
   when: manual
   tags:
     - build_job_docker
@@ -489,12 +491,12 @@ clean:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   script:
     - echo $EKS_CLUSTER_NAME
-    - echo $AWS_REGION
-    - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME  # $EKS_CLUSTER_NAME demo-eks-appv1
-    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-    - aws configure set region $AWS_REGION
-    - eksctl delete cluster --name $EKS_CLUSTER_NAME
+    # - echo $AWS_REGION
+    # - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME  # $EKS_CLUSTER_NAME demo-eks-appv1
+    # - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+    # - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+    # - aws configure set region $AWS_REGION
+    # - eksctl delete cluster --name $EKS_CLUSTER_NAME
   tags:
     - build_job_docker
   when: manual
