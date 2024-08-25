@@ -1,35 +1,34 @@
-# Main CI/CD configuration file that includes other pipeline files for test and prod environment
-# trigger_job_test:
-#   allow_failure: true
-#   trigger:
-#     include:
-#       - local: '/.gitlab-ci-test.yml'
-#   rules:
-#     - if: $CI_PIPELINE_SOURCE == "push"
-#       when: never
-#     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-#     - if: $CI_COMMIT_REF_NAME == 'feature'
-
-# trigger_job_main:
-#   allow_failure: true
-#   trigger:
-#     include:
-#       - local: '/.gitlab-ci-prod.yml'
-#   rules:
-#     - if: $CI_PIPELINE_SOURCE == "push"
-#       when: never
-#     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-#     - if: $CI_COMMIT_REF_NAME == 'test'
+Main CI/CD configuration file that includes other pipeline files for test and prod environment
+trigger_job_test:
+  allow_failure: true
+  trigger:
+    include:
+      - local: '/.gitlab-ci-test.yml'
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_BRANCH == 'test'
 
 trigger_job_main:
   allow_failure: true
   trigger:
     include:
       - local: '/.gitlab-ci-prod.yml'
-      # - local: '/.gitlab-ci-test.yml'
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
       when: never
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_COMMIT_REF_NAME == 'main'
+    - if: $$CI_COMMIT_BRANCH == 'main'
+
+# trigger_job_main:
+#   allow_failure: true
+#   trigger:
+#     include:
+#       - local: '/.gitlab-ci-prod.yml'
+#       - local: '/.gitlab-ci-test.yml'
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "push"
+#       when: never
+#     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
 
