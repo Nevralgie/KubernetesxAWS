@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import io
 import base64
 
+#test
 # Define static folder for css files
 STATIC_DIR = os.path.abspath('./static')
 app = Flask(__name__, static_folder=STATIC_DIR)
