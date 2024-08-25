@@ -79,9 +79,7 @@ build-docker-image:
       - combinedHtmlReport.html
       - report.xml
       - .docker/config.json
-  only:
-    - main
-
+ 
 deploy_eks:
   stage: deploy
   image:
