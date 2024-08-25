@@ -50,8 +50,8 @@ trigger_pipeline:
       - local: '/.gitlab-ci-test.yml'
   rules:
     # Trigger test pipeline for feature -> test merge requests
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =="~ /^feature\/.*$/"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     # - if: $CI_COMMIT_BRANCH =~ /^feature\/.*$/ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'test'
   allow_failure: true
 
@@ -63,8 +63,8 @@ triggerjobmain:
       # - local: '/.gitlab-ci-prod.yml'
       - local: '/.gitlab-ci-prod.yml'
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == 'test'
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     # Trigger prod pipeline for test -> main merge requests
     # - if: $CI_COMMIT_BRANCH == 'test' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'main'
   allow_failure: true
