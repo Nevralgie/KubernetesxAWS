@@ -1,6 +1,6 @@
 workflow:
   rules:
-   - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+   - if: $CI_PIPELINE_ID
 
 variables:
   ENV: "production"
