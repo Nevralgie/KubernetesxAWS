@@ -436,9 +436,8 @@ deploy_ai_analyzer:
 trigger_prod_pipeline:
   stage: trigger
   trigger:
-    include:
-        project: "$CI_PROJECT_PATH"
-        branch: main
+    project: "$CI_PROJECT_PATH"
+    branch: main
   allow_failure: false
   when: manual
   needs:
