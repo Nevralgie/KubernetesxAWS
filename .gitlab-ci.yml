@@ -40,21 +40,21 @@ workflow:
 stages:
   - trigger
 
-# Trigger Job to include appropriate pipeline based on branch
-trigger_pipeline:
-  stage: trigger
-  trigger:
-    include:
-      # Include the right pipeline based on the branch
-      - local: '/.gitlab-ci-prod.yml'
-      - local: '/.gitlab-ci-test.yml'
-  rules:
-    # Trigger test pipeline for feature -> test merge requests
-    # - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =="~ /^feature\/.*$/" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'test'
-    # - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =="~ /^feature\/.*$/"
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    # - if: $CI_COMMIT_BRANCH =~ /^feature\/.*$/ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'test'
-  allow_failure: true
+# # Trigger Job to include appropriate pipeline based on branch
+# trigger_pipeline:
+#   stage: trigger
+#   trigger:
+#     include:
+#       # Include the right pipeline based on the branch
+#       - local: '/.gitlab-ci-prod.yml'
+#       - local: '/.gitlab-ci-test.yml'
+#   rules:
+#     # Trigger test pipeline for feature -> test merge requests
+#     # - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =="~ /^feature\/.*$/" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'test'
+#     # - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =="~ /^feature\/.*$/"
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+#     # - if: $CI_COMMIT_BRANCH =~ /^feature\/.*$/ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'test'
+#   allow_failure: true
 
 # triggerjobmain:
 #   stage: trigger
@@ -70,3 +70,15 @@ trigger_pipeline:
 #     # Trigger prod pipeline for test -> main merge requests
 #     # - if: $CI_COMMIT_BRANCH == 'test' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'main'
 #   allow_failure: true
+
+trigger_prod_pipeline:
+  stage: trigger
+  trigger:
+    include:
+      - local: '/.gitlab-ci-prod.yml'
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
+      changes:
+        - '**/*'  # Trigger on any file change
+        - '!.gitlab-ci.yml'  # Ignore changes to the .gitlab-ci.yml file
+  allow_failure: true
