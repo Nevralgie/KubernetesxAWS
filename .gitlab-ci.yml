@@ -425,7 +425,8 @@ deploy_ai_analyzer:
       - $CI_PROJECT_DIR/k8sresults.json
   needs:
   # Job dependency
-    - deploy_ai_analyzer
+    - deploy_eks
+    - monitoring
   # Runs only for the test branch
   # only:
   #   - test
@@ -436,14 +437,13 @@ trigger_prod_pipeline:
   stage: trigger
   trigger:
     include:
-      - project: $CI_PROJECT_PATH
+        project: "$CI_PROJECT_PATH"
         branch: main
   allow_failure: false
   when: manual
   needs:
   # Job dependency
-    - deploy_eks
-    - monitoring
+    - deploy_ai_analyzer
   only:
     - test
 destroy:
