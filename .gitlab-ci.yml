@@ -10,6 +10,7 @@ variables:
   APP_VERSION: "1.0.8"
   OPENAI_TOKEN: "$OPENAI_TOKEN"
   TEST_ENV_CIDR: "172.16.0.0/16"
+  TRIGGER_TOKEN: "$TRIGGER_TOKEN"
 
 stages:
   - build_stage
@@ -435,16 +436,15 @@ deploy_ai_analyzer:
 
 trigger_prod_pipeline:
   stage: trigger
-  trigger:
-    project: "$CI_PROJECT_PATH"
-    branch: main
-  allow_failure: false
+  script:
+    - curl --request POST --form token=$TRIGGER_TOKEN --form ref=main \ "https://gitlab.example.com/api/v4/projects/Nevii/leverage-your-own-k8s-expert/trigger/pipeline"
   when: manual
   needs:
   # Job dependency
     - deploy_ai_analyzer
   only:
     - test
+
 destroy:
   stage: destroy_infra
   image:
