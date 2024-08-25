@@ -1,7 +1,7 @@
 resource "aws_db_instance" "rds_mysql" {
   allocated_storage    = 20
   db_name              = "db_app"
-  identifier           = "devopsdb-app"
+  identifier           = "devopsdb-app-${var.environment}"
   engine               = "mysql"
   engine_version       = "8.0"
   instance_class       = "db.t3.micro"
