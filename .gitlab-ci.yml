@@ -57,7 +57,7 @@ main:
   #   PIPELINE_PARENT_ID : $CI_PIPELINE_ID
   trigger:
     include:
-      - local: '/.gitlab-ci-prod.yml'
+      # - local: '/.gitlab-ci-prod.yml'
       - local: '/.gitlab-ci-test.yml'
   rules:
     # - if: $CI_COMMIT_BRANCH == 'main'
