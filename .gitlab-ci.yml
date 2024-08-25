@@ -33,10 +33,6 @@
 #   allow_failure: true
 
 # Main CI/CD configuration
-workflow:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-
 stages:
   - trigger
 
@@ -77,7 +73,6 @@ trigger_prod_pipeline:
     include:
       - local: '/.gitlab-ci-prod.yml'
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == 'main'
       changes:
         - '**/*'  # Trigger on any file change
