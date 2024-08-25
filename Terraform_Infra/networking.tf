@@ -11,7 +11,7 @@ data "aws_vpc" "target_peering_vpc" {
 # Create additional private subnets
 resource "aws_subnet" "private_subnet_1" {
   vpc_id                  = data.aws_vpc.eks_vpc.id
-  cidr_block              = "192.168.192.0/19"
+  cidr_block              = var.environment == "production" ? "10.0.192.0/19" : "172.16.192.0/19"
   availability_zone       = "eu-west-3a"
   map_public_ip_on_launch = false
   tags = {
@@ -21,7 +21,7 @@ resource "aws_subnet" "private_subnet_1" {
 
 resource "aws_subnet" "private_subnet_2" {
   vpc_id                  = data.aws_vpc.eks_vpc.id
-  cidr_block              = "192.168.224.0/19"
+  cidr_block              = var.environment == "production" ? "10.0.224.0/19" : "172.16.224.0/19"
   availability_zone       = "eu-west-3b"
   map_public_ip_on_launch = false
   tags = {
@@ -62,7 +62,7 @@ resource "aws_vpc_peering_connection_accepter" "peer" {
 # Create a route for the second VPC's CIDR block in the first VPC's route table
 resource "aws_route" "main_vpc_route_to_k8s" {
   route_table_id            = "rtb-0cb9914b16f6618ed"
-  destination_cidr_block    = "192.168.0.0/16" # Replace with the other VPC's CIDR block
+  destination_cidr_block    = var.environment == "production" ? "10.0.0.0/16" : "172.16.0.0/16" # Replace with the other VPC's CIDR block
   vpc_peering_connection_id = aws_vpc_peering_connection.vpc_gitlab_runner.id
 }
 
