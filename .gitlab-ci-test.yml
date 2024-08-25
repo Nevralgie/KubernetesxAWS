@@ -1,7 +1,6 @@
 # workflow:
 #   rules:
-#     - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
-#     - if: $CI_MERGE_REQUEST_ID
+#     - if: $CI_PIPELINE_ID
 
 variables:
   ENV: "test"
@@ -28,9 +27,8 @@ stages:
 build-docker-image:
   stage: build
   rules: 
+    - if: $CI_COMMIT_BRANCH == 'test'
     - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
-    - if: $CI_MERGE_REQUEST_ID
-    - if: $CI_COMMIT_BRANCH == 'main'
   image: 
     name: docker:24.0.5
   services:
