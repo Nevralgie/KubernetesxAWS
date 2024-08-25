@@ -1,6 +1,6 @@
 workflow:
   rules:
-    # - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =="~ /^feature\/.*$/" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'test'
+    - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =="~ /^feature\/.*$/" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'test'
     - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
 
 variables:
