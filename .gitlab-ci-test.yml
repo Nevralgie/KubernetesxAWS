@@ -29,6 +29,7 @@ build-docker-image:
   stage: build
   rules: 
     - if: $CI_COMMIT_BRANCH == 'test'
+    - if: $CI_PIPELINE_ID
   image: 
     name: docker:24.0.5
   services:
