@@ -16,7 +16,7 @@ variables:
   PROD_ENV_CIDR: "10.0.0.0/16"
 
 stages:
-  - build
+  - build_prod
   - deploy
   - provision
   - monitor
@@ -24,7 +24,7 @@ stages:
   - destroy_cluster
 
 build-docker-image:
-  stage: build
+  stage: build_prod
   rules:
    - if: $CI_COMMIT_BRANCH == 'main'
    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
