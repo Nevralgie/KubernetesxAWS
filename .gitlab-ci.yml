@@ -51,7 +51,7 @@ stages:
 main:
   stage: trigger
   variables:
-  PARENT_ID : $CI_PIPELINE_ID
+    PARENT_ID : $CI_PIPELINE_ID
   trigger:
     include:
       - local: '/.gitlab-ci-prod.yml'
@@ -63,7 +63,7 @@ main:
 test:
   stage: trigger
   variables:
-  PARENT_ID : $CI_PIPELINE_ID
+    PARENT_ID : $CI_PIPELINE_ID
   trigger:
     include:
       - local: '/.gitlab-ci-test.yml'
