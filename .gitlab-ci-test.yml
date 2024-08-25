@@ -1,6 +1,6 @@
-workflow:
-  rules:
-    - if: $CI_COMMIT_BRANCH == 'test'
+# workflow:
+#   rules:
+#     - if: $CI_COMMIT_BRANCH == 'test'
 
 variables:
   ENV: "test"
@@ -27,7 +27,7 @@ stages:
 build-docker-image:
   stage: build
   rules: 
-    # - if: $CI_COMMIT_BRANCH == 'test'
+    - if: $CI_COMMIT_BRANCH == 'test'
     - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image: 
     name: docker:24.0.5

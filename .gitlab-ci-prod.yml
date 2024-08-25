@@ -1,6 +1,6 @@
-workflow:
-  rules:
-   - if: $CI_COMMIT_BRANCH == 'main'
+# workflow:
+#   rules:
+#    - if: $CI_COMMIT_BRANCH == 'main'
 
 variables:
   ENV: "production"
