@@ -26,8 +26,8 @@ stages:
 
 build-docker-image:
   stage: build
-  # rules:
-  #   # - if: $CI_COMMIT_BRANCH == 'main'
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
   #   - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
   image: 
     name: docker:24.0.5
@@ -79,9 +79,13 @@ build-docker-image:
       - combinedHtmlReport.html
       - report.xml
       - .docker/config.json
+  # only: 
+  #   - main
  
 deploy_eks:
   stage: deploy
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   environment:
@@ -122,9 +126,13 @@ deploy_eks:
     - job: build-docker-image
       artifacts: true
 # # # #   # when: manual
-
+  # only: 
+  #   - main
+ 
 deploy_db:
   stage: deploy
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   environment:
@@ -169,11 +177,16 @@ deploy_db:
   tags:
     - build_job_docker
 # #   # when: manual
+  # only: 
+  #   - main
+ 
 
 
   
 hydrate_db:
   stage: provision
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
   # image: python:3.9.17-slim-bullseye
   before_script:
     # Export credentials (optional if the dev pipeline has been launched before)
@@ -196,9 +209,14 @@ hydrate_db:
     - job: deploy_db
       artifacts: true
 # #   # when: manual
+  # only: 
+  #   - main
+ 
 
 deploy_stock_app:
   stage: provision
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
   image: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   before_script:
     # Install the necessary packages to use the exported yaml artifacts values in the files
@@ -294,10 +312,15 @@ deploy_stock_app:
   tags:
     - build_job_docker
   # when: manual
+  # only: 
+  #   - main
+ 
   
 
 monitoring:
   stage: monitor
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   script:
@@ -323,9 +346,14 @@ monitoring:
     - deploy_eks
     - deploy_stock_app
 #   # when: manual
+  # only: 
+  #   - main
+ 
   
 destroy:
   stage: destroy_infra
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   before_script:
@@ -342,6 +370,8 @@ destroy:
 
 clean:
   stage: destroy_cluster
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   script:
