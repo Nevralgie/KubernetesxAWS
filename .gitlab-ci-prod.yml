@@ -1,7 +1,3 @@
-# workflow:
-#   rules:
-#    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
-
 variables:
   ENV: "production"
   DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
