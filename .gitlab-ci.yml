@@ -7,6 +7,11 @@
 #   rules:
 #     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
 #     - if: $CI_COMMIT_BRANCH == 'main'
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: never
 
 stages:
   - trigger
@@ -56,10 +61,7 @@ main:
     include:
       - local: '/.gitlab-ci-prod.yml'
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == 'main'
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: never
   allow_failure: true
 
 test:
@@ -70,8 +72,5 @@ test:
     include:
       - local: '/.gitlab-ci-test.yml'
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == 'test'
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: never
   allow_failure: true
