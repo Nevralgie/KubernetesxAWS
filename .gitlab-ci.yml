@@ -63,7 +63,7 @@ main:
 test:
   stage: trigger
   variables:
-     PIPELINE_PARENT_ID : $CI_PIPELINE_ID
+    PIPELINE_PARENT_ID : $CI_PIPELINE_ID
   trigger:
     include:
       - local: '/.gitlab-ci-test.yml'
