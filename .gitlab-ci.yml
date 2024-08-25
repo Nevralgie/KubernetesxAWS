@@ -7,13 +7,24 @@ workflow:
 stages:
   - trigger
 
-triggerjob:
+triggerjobtest:
   stage: trigger
   trigger:
     include:
       # Files for each pipeline 
-      - local: '/.gitlab-ci-prod.yml'
+      # - local: '/.gitlab-ci-prod.yml'
       - local: '/.gitlab-ci-test.yml'
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  allow_failure: true
+
+triggerjobmain:
+  stage: trigger
+  trigger:
+    include:
+      # Files for each pipeline 
+      # - local: '/.gitlab-ci-prod.yml'
+      - local: '/.gitlab-ci-prod.yml'
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   allow_failure: true
