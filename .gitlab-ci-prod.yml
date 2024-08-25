@@ -84,6 +84,8 @@ build-docker-image:
  
 deploy_eks:
   stage: deploy
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   environment:
@@ -129,6 +131,8 @@ deploy_eks:
  
 deploy_db:
   stage: deploy
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   environment:
@@ -181,6 +185,8 @@ deploy_db:
   
 hydrate_db:
   stage: provision
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
   # image: python:3.9.17-slim-bullseye
   before_script:
     # Export credentials (optional if the dev pipeline has been launched before)
@@ -209,6 +215,8 @@ hydrate_db:
 
 deploy_stock_app:
   stage: provision
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
   image: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   before_script:
     # Install the necessary packages to use the exported yaml artifacts values in the files
@@ -311,6 +319,8 @@ deploy_stock_app:
 
 monitoring:
   stage: monitor
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   script:
@@ -342,6 +352,8 @@ monitoring:
   
 destroy:
   stage: destroy_infra
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   before_script:
@@ -358,6 +370,8 @@ destroy:
 
 clean:
   stage: destroy_cluster
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
   image:
     name: registry.gitlab.com/nevii/terraform_eks/awsclitoolbox:v0.3
   script:
