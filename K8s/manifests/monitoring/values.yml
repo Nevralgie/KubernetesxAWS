@@ -7,7 +7,7 @@ prometheus:
   
 grafana:
   enabled: true
-  adminPassword: vxAzurev69007xv
+  adminPassword: xxxxxxxxxxx
   service:
     type: ClusterIP
     port: 80
