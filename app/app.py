@@ -33,13 +33,11 @@ stock_names = ['AMZN', 'MSFT']  # Replace with your desired stock symbols
 def get_db_connection():
     # Increment the function calls counter
     return mysql.connector.connect(
-        user='eks_administrator',
-        password='vAdmintest69007v',
-        host='mysql-service',
-        database='db_app',
+        user='xxxxxxxx',
+        password='xxxxxxxxxx',
+        host='xxxxxxxxxxx',
+        database='xxxxxxxxxxx',
     )
-    # Record latency
-
 
 def fetch_data(stock_name):
     try:
@@ -134,7 +132,7 @@ def index():
 def metrics():
     REQUEST_COUNT.inc()  # Increment the request count each time this endpoint is accessed
     return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
-
+# Error Handling
 @app.errorhandler(404)
 def not_found_error(error):
     HTTP_ERROR_COUNT.labels(status_code=404).inc()
